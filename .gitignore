@@ -1,0 +1,28 @@
+.gradle
+build/
+target/
+sdk-deployer/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+# Ignore IntelliJ IDEA files
+.idea/workspace.xml
+.idea/tasks.xml
+*.iml
+*.ipr
+*.iws
+
+# Ignore MacOS metadata files
+.DS_Store
+
+*.class

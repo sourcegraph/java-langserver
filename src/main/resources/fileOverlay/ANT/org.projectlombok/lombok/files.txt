@@ -1,0 +1,5 @@
+/pom.xml
+/.injected-maven-repository/org/projectlombok/lombok-patcher/0.22/lombok-patcher-0.22.jar
+/.injected-maven-repository/org/projectlombok/lombok-patcher/0.22/lombok-patcher-0.22.pom
+/.injected-maven-repository/org/projectlombok/lombok-patcher/maven-metadata-local.xml
+/src/utils/lombok/javac/Javac.java

@@ -1,0 +1,12 @@
+{
+    "projects": {
+        "/": {
+            "groupId": "org.json",
+            "artifactId": "json",
+            "version": "20160810",
+            "sourceDirectories" : [
+                "/"
+            ]
+        }
+    }
+}

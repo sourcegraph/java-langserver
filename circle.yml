@@ -1,0 +1,28 @@
+machine:
+  java:
+    version: oraclejdk8
+  environment:
+    _JAVA_OPTIONS: "-Xms2000m -Xmx2000m"
+    ANDROID_JAR_PATH: /usr/local/android-sdk-linux/platforms/android-25/android.jar
+    ANDROID_HOME: /usr/local/android-sdk-linux
+    LIGHTSTEP_INCLUDE_SENSITIVE: true
+    LSP_TIMEOUT: 300
+checkout:
+  post:
+    - git submodule sync
+    - git submodule update --init
+    - ./add-android-support-libs.sh
+test:
+  override:
+    - mvn -Dtest=FastTestSuite integration-test
+    - mvn -Dtest=ApacheCommonsIo integration-test
+    - mvn -Dtest=GoogleGuava integration-test
+    - mvn -Dtest=Dropwizard integration-test
+    - mvn -Dtest=JavaDesignPatterns integration-test
+dependencies:
+  override:
+    - mvn -U dependency:resolve generate-resources
+    - ./dev/ci/cache.sh
+  cache_directories:
+    - "src/test/resources/openjdk8"
+    - "~/.java-langserver"

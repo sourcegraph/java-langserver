@@ -1,0 +1,11 @@
+
+// Append this to the bottom of your root gradle build script.
+
+allprojects {
+    repositories {
+        // helps resolve things like android support libraries, which we expect the user to have installed in their
+        // local maven repo
+        mavenLocal()
+    }
+    apply plugin: com.sourcegraph.SourcegraphPlugin
+}

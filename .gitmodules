@@ -1,0 +1,129 @@
+[submodule "src/test/resources/java-pom-with-dep"]
+	path = src/test/resources/java-pom-with-dep
+	url = git@github.com:sgtest/java-pom-with-dep.git
+[submodule "src/test/resources/openjdk8"]
+	path = src/test/resources/openjdk8
+	url = git@github.com:jdkmirrors/openjdk8.git
+[submodule "src/test/resources/java-pom-with-deps"]
+	path = src/test/resources/java-pom-with-deps
+	url = git@github.com:sgtest/java-pom-with-deps.git
+[submodule "src/test/resources/java-simple-pom"]
+	path = src/test/resources/java-simple-pom
+	url = git@github.com:sgtest/java-simple-pom.git
+[submodule "src/test/resources/cup-of-joe"]
+	path = src/test/resources/cup-of-joe
+	url = git@github.com:akhleung/cup-of-joe.git
+[submodule "src/test/resources/java-parent-pom"]
+	path = src/test/resources/java-parent-pom
+	url = git@github.com:sgtest/java-parent-pom
+[submodule "src/test/resources/java-fake-guava"]
+	path = src/test/resources/java-fake-guava
+	url = git@github.com:sgtest/java-fake-guava
+[submodule "src/test/resources/java-7"]
+	path = src/test/resources/java-7
+	url = git@github.com:sgtest/java-7.git
+[submodule "src/test/resources/java-simple"]
+	path = src/test/resources/java-simple
+	url = git@github.com:sgtest/java-simple.git
+[submodule "src/test/resources/java-annotation-arguments"]
+	path = src/test/resources/java-annotation-arguments
+	url = git@github.com:sgtest/java-annotation-arguments.git
+[submodule "src/test/resources/guava"]
+	path = src/test/resources/guava
+	url = git@github.com:google/guava.git
+[submodule "src/test/resources/commons-lang"]
+	path = src/test/resources/commons-lang
+	url = git@github.com:apache/commons-lang
+[submodule "src/test/resources/lombok"]
+	path = src/test/resources/lombok
+	url = git@github.com:rzwitserloot/lombok.git
+[submodule "src/test/resources/dropwizard-snippets"]
+	path = src/test/resources/dropwizard-snippets
+	url = git@github.com:sgtest/dropwizard-snippets.git
+[submodule "src/test/resources/log4j"]
+	path = src/test/resources/log4j
+	url = https://github.com/apache/log4j
+[submodule "src/test/resources/dropwizard"]
+	path = src/test/resources/dropwizard
+	url = https://github.com/dropwizard/dropwizard.git
+[submodule "src/test/resources/commons-io"]
+	path = src/test/resources/commons-io
+	url = git@github.com:apache/commons-io.git
+[submodule "src/test/resources/java-design-patterns"]
+	path = src/test/resources/java-design-patterns
+	url = git@github.com:iluwatar/java-design-patterns.git
+[submodule "src/test/resources/hackthon"]
+	path = src/test/resources/hackthon
+	url = https://github.com/fangjian601/hackthon
+[submodule "src/test/resources/openjdk8-langtools"]
+	path = src/test/resources/openjdk8-langtools
+	url = https://github.com/jdkmirrors/openjdk8-langtools
+[submodule "src/test/resources/multi-module"]
+	path = src/test/resources/multi-module
+	url = git@github.com:akhleung/multi-module
+[submodule "src/test/resources/mockito"]
+	path = src/test/resources/mockito
+	url = https://github.com/mockito/mockito
+[submodule "src/test/resources/picasso"]
+	path = src/test/resources/picasso
+	url = https://github.com/square/picasso
+[submodule "src/test/resources/priam"]
+	path = src/test/resources/priam
+	url = https://github.com/netflix/priam
+[submodule "src/test/resources/json-patch"]
+	path = src/test/resources/json-patch
+	url = https://github.com/daveclayton/json-patch
+[submodule "src/test/resources/leakcanary"]
+	path = src/test/resources/leakcanary
+	url = https://github.com/square/leakcanary
+[submodule "src/test/resources/android-sdk"]
+	path = src/test/resources/android-sdk
+	url = https://github.com/androidmirrors/android-sdk
+[submodule "src/test/resources/glide"]
+	path = src/test/resources/glide
+	url = git@github.com:bumptech/glide
+[submodule "src/test/resources/EventBus"]
+	path = src/test/resources/EventBus
+	url = git@github.com:greenrobot/EventBus
+[submodule "src/test/resources/tinker"]
+	path = src/test/resources/tinker
+	url = git@github.com:Tencent/tinker
+[submodule "src/test/resources/ion"]
+	path = src/test/resources/ion
+	url = git@github.com:koush/ion
+[submodule "src/test/resources/platform_frameworks_support"]
+	path = src/test/resources/platform_frameworks_support
+	url = https://github.com/android/platform_frameworks_support
+[submodule "src/test/resources/elasticsearch"]
+	path = src/test/resources/elasticsearch
+	url = git@github.com:elastic/elasticsearch
+[submodule "src/test/resources/AppIntro"]
+	path = src/test/resources/AppIntro
+	url = https://github.com/apl-devs/AppIntro
+[submodule "src/test/resources/MPAndroidChart"]
+	path = src/test/resources/MPAndroidChart
+	url = https://github.com/PhilJay/MPAndroidChart
+[submodule "src/test/resources/servlet-api"]
+	path = src/test/resources/servlet-api
+	url = https://github.com/jdkmirrors/servlet-api
+[submodule "src/test/resources/AndroidViewAnimations"]
+	path = src/test/resources/AndroidViewAnimations
+	url = git@github.com:daimajia/AndroidViewAnimations
+[submodule "src/test/resources/axis2-java"]
+	path = src/test/resources/axis2-java
+	url = https://github.com/apache/axis2-java
+[submodule "src/test/resources/jdom"]
+	path = src/test/resources/jdom
+	url = https://github.com/hunterhacker/jdom
+[submodule "src/test/resources/JSON-java"]
+	path = src/test/resources/JSON-java
+	url = https://github.com/stleary/JSON-java
+[submodule "src/test/resources/java-simple-javaconfig"]
+	path = src/test/resources/java-simple-javaconfig
+	url = git@github.com:sgtest/java-simple-javaconfig.git
+[submodule "src/test/resources/java-pom-with-deps-javaconfig"]
+	path = src/test/resources/java-pom-with-deps-javaconfig
+	url = git@github.com:sgtest/java-pom-with-deps-javaconfig.git
+[submodule "src/test/resources/mockito-javaconfig"]
+	path = src/test/resources/mockito-javaconfig
+	url = git@github.com:beyang/mockito.git

@@ -1,0 +1,19 @@
+{
+    "projects": {
+        "/": {
+            "groupId": "org.jdom",
+            "artifactId": "jdom2",
+            "version": "2.0.6",
+            "sourceDirectories" : [
+                "core/src/java",
+                "core/package",
+                "core/samples",
+                "contrib/src/java",
+                "contrib/samples"
+            ],
+            "testSourceDirectories" : [
+                "test/src/java"
+            ]
+        }
+    }
+}

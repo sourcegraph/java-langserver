@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>UNKNOWN_GROUP</groupId>
+  <artifactId>MPChartExample</artifactId>
+  <version>UNKNOWN_VERSION</version>
+  <dependencies>
+    <dependency>
+      <groupId>com.github.PhilJay</groupId>
+      <artifactId>MPAndroidChart-Realm</artifactId>
+      <version>v2.0.2</version>
+      <type>aar</type>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>null</groupId>
+      <artifactId>MPChartLib</artifactId>
+      <version>UNKNOWN_VERSION</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.android.support</groupId>
+      <artifactId>appcompat-v7</artifactId>
+      <version>24.2.1</version>
+      <type>aar</type>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+  <repositories>
+    <repository>
+      <id>https://jitpack.io</id>
+      <name>https://jitpack.io</name>
+      <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>http://oss.jfrog.org/artifactory/oss-snapshot-local</id>
+      <name>http://oss.jfrog.org/artifactory/oss-snapshot-local</name>
+      <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+    </repository>
+  </repositories>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  </build>
+</project>

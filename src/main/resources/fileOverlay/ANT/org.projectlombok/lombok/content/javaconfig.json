@@ -1,0 +1,96 @@
+{
+    "projects": {
+        "/": {
+            "repositories" : [ {
+                "id" : "sonatype-nexus-snapshots",
+                "url" : "https://oss.sonatype.org/content/repositories/snapshots"
+            }, {
+                "id" : "central",
+                "url" : "https://repo.maven.apache.org/maven2"
+            }, {
+  	        "id": "ebi",
+  	        "url": "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+            }, {
+  	        "id": "Eclipse Releases",
+  	        "url": "https://repo.eclipse.org/content/groups/releases/"
+            }],
+            "artifactId": "lombok",
+            "groupId": "org.projectlombok",
+            "version": "4.0.0",
+            "sourceDirectories" : [
+                "src/core",
+                "src/delombok",
+                "src/eclipseAgent",
+                "src/installer",
+                "src/javac-only-stubs",
+                "src/launch",
+                "src/stubs",
+                "src/testAP",
+                "src/useTestAP",
+                "src/utils"
+            ],
+            "testSourceDirectories" : [
+  	        "test/bytecode/src",
+  	        "test/configuration/src",
+  	        "test/core/src",
+  	        "test/ecj",
+  	        "test/transform/src"
+            ],
+            "dependencies" : [ {
+                "groupId" : "org.mangosdk.spi",
+                "artifactId" : "spi",
+                "version" : "0.2.4",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.eclipse.core",
+                "artifactId" : "org.eclipse.core.runtime",
+                "version" : "3.9.0.v20130326-1255",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.eclipse.jdt",
+                "artifactId" : "org.eclipse.jdt.core",
+                "version" : "3.10.0.v20140604-1726",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.eclipse.core",
+                "artifactId" : "org.eclipse.core.resources",
+                "version" : "3.8.101.v20130717-0806",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.osgi",
+                "artifactId" : "org.osgi.core",
+                "version" : "4.0.0",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.projectlombok",
+                "artifactId" : "lombok-patcher",
+                "version" : "0.22",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "com.sun.tools",
+                "artifactId" : "tools",
+                "version" : "1.8",
+                "scope" : "system",
+                "systemPath" : "${java.home}/../lib/tools.jar"
+            }, {
+                "groupId" : "org.eclipse.equinox",
+                "artifactId" : "org.eclipse.equinox.common",
+                "version" : "3.6.200.v20130402-1505",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.eclipse.core",
+                "artifactId" : "jobs",
+                "version" : "3.5.300-v20130429-1813",
+                "scope" : "compile",
+                "systemPath" : null
+            }]
+        }
+    }
+}

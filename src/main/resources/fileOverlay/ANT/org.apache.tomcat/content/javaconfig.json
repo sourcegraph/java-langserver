@@ -1,0 +1,15 @@
+{
+    "projects": {
+        "/": {
+            "groupId": "org.apache.tomcat",
+            "artifactId": "tomcat",
+            "version": "9.0.0.M18",
+            "sourceDirectories" : [
+                "java"
+            ],
+            "testSourceDirectories" : [
+  	        "test"
+            ]
+        }
+    }
+}

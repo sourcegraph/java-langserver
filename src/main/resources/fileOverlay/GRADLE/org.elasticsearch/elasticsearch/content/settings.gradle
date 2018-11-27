@@ -1,0 +1,88 @@
+// copied from buildSrc/version.properties
+versions.elasticsearch = "6.0.0-alpha1"
+versions.lucene = "6.5.0"
+versions.spatial4j = "0.6"
+versions.jts = "1.13"
+versions.jackson = "2.8.6"
+versions.snakeyaml = "1.15"
+versions.log4j = "2.7"
+versions.slf4j = "1.6.2"
+versions.jna = "4.4.0"
+versions.randomizedrunner = "2.5.0"
+versions.junit = "4.11"
+versions.httpclient = "4.5.2"
+versions.httpcore = "4.4.5"
+versions.httpasyncclient = "4.1.2"
+versions.commonslogging = "1.1.3"
+versions.commonscodec = "1.10"
+versions.hamcrest = "1.3"
+versions.securemock = "1.2"
+versions.mocksocket = "1.1"
+versions.jmh = "1.17.3"
+
+include 'build-tools'
+include 'rest-api-spec'
+include 'core'
+include 'docs'
+include 'client:rest'
+include 'client:rest-high-level'
+include 'client:sniffer'
+include 'client:transport'
+include 'client:test'
+include 'client:client-benchmark-noop-api-plugin'
+include 'client:benchmark'
+include 'benchmarks'
+include 'distribution:integ-test-zip'
+include 'distribution:zip'
+include 'distribution:tar'
+include 'distribution:deb'
+include 'distribution:rpm'
+include 'distribution:tools:java-version-checker'
+include 'test:framework'
+include 'test:fixtures:example-fixture'
+include 'test:fixtures:hdfs-fixture'
+include 'test:logger-usage'
+include 'modules:aggs-matrix-stats'
+include 'modules:ingest-common'
+include 'modules:lang-expression'
+include 'modules:lang-mustache'
+include 'modules:lang-painless'
+include 'modules:transport-netty4'
+include 'modules:reindex'
+include 'modules:percolator'
+include 'modules:repository-url'
+include 'plugins:analysis-icu'
+include 'plugins:analysis-kuromoji'
+include 'plugins:analysis-phonetic'
+include 'plugins:analysis-smartcn'
+include 'plugins:analysis-stempel'
+include 'plugins:analysis-ukrainian'
+include 'plugins:discovery-azure-classic'
+include 'plugins:discovery-ec2'
+include 'plugins:discovery-file'
+include 'plugins:discovery-gce'
+include 'plugins:ingest-geoip'
+include 'plugins:ingest-attachment'
+include 'plugins:ingest-user-agent'
+include 'plugins:mapper-murmur3'
+include 'plugins:mapper-size'
+include 'plugins:repository-azure'
+include 'plugins:repository-gcs'
+include 'plugins:repository-hdfs'
+include 'plugins:repository-s3'
+include 'plugins:jvm-example'
+include 'plugins:store-smb'
+include 'qa:backwards-5.0'
+include 'qa:evil-tests'
+include 'qa:no-bootstrap-tests'
+include 'qa:rolling-upgrade'
+include 'qa:multi-cluster-search'
+include 'qa:smoke-test-client'
+include 'qa:smoke-test-http'
+include 'qa:smoke-test-ingest-with-all-dependencies'
+include 'qa:smoke-test-ingest-disabled'
+include 'qa:smoke-test-multinode'
+include 'qa:smoke-test-plugins'
+include 'qa:smoke-test-reindex-with-painless'
+include 'qa:smoke-test-tribe-node'
+include 'qa:vagrant'

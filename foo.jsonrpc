@@ -1,0 +1,43 @@
+Content-Length:78
+Content-Type:application/vscode-jsonrpc;charset=utf8
+
+{ "jsonrpc": "2.0", "method": "foo", "params": { "x": 1, "y": 2 }, "id": 0 }
+
+
+
+Content-Length:112
+Content-Type:application/vscode-jsonrpc;charset=utf8
+
+{ "jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "foo/bar", "capabilities": {} }, "id": 1 }
+
+
+
+{ "jsonrpc": "2.0", "id": 0, "result": [ 1, 2, 3 ] }
+
+Content-Length:172
+Content-Type:application/vscode-jsonrpc;charset=utf8
+
+{ "jsonrpc": "2.0", "result": [ { "uri": "file://foo.java" }, { "uri": "file://bar.java" }, { "uri": "file://hux.java" } ], "id": "6d9dad6d-4c6b-4945-a963-acd4d80313e7" }
+
+
+
+{"jsonrpc":"2.0","id":"6d9dad6d-4c6b-4945-a963-acd4d80313e7","params":{"base":"foo/bar"},"method":"workspace/xfiles"}
+
+
+
+Content-Length:76
+Content-Type:application/vscode-jsonrpc;charset=utf8
+
+{ "jsonrpc": "2.0", "method": "foo", "params": { "x": 1, "y": 2 }, "id": 0
+
+
+
+Content-Length:55
+
+{ "jsonrpc": "2.0", "method": "shutdown", "id": 237 }
+
+
+
+Content-Length:51
+
+{ "jsonrpc": "2.0", "method": "exit", "id": 238 }

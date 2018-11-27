@@ -1,0 +1,121 @@
+{
+    "projects": {
+        "/": {
+            "sourceDirectory" : "src/main/java",
+            "testSourceDirectory" : "src/test/java",
+            "artifactId": "jackson-databind",
+            "groupId": "com.fasterxml.jackson.core",
+            "version": "2.9.0.pr2-SNAPSHOT",
+            "repositories" : [ {
+                "id" : "sonatype-nexus-snapshots",
+                "url" : "https://oss.sonatype.org/content/repositories/snapshots"
+            }, {
+                "id" : "central",
+                "url" : "https://repo.maven.apache.org/maven2"
+            } ],
+            "dependencies" : [ {
+                "groupId" : "com.fasterxml.jackson.core",
+                "artifactId" : "jackson-annotations",
+                "version" : "2.9.0-SNAPSHOT",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "com.fasterxml.jackson.core",
+                "artifactId" : "jackson-core",
+                "version" : "2.9.0-SNAPSHOT",
+                "scope" : "compile",
+                "systemPath" : null
+            }, {
+                "groupId" : "junit",
+                "artifactId" : "junit",
+                "version" : "4.12",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.hamcrest",
+                "artifactId" : "hamcrest-core",
+                "version" : "1.3",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-module-junit4",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-module-junit4-common",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-core",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.javassist",
+                "artifactId" : "javassist",
+                "version" : "3.20.0-GA",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-reflect",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-api-mockito",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.mockito",
+                "artifactId" : "mockito-core",
+                "version" : "1.10.19",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.objenesis",
+                "artifactId" : "objenesis",
+                "version" : "2.1",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-api-mockito-common",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "org.powermock",
+                "artifactId" : "powermock-api-support",
+                "version" : "1.6.5",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "javax.measure",
+                "artifactId" : "jsr-275",
+                "version" : "0.9.1",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "com.google.jimfs",
+                "artifactId" : "jimfs",
+                "version" : "1.1",
+                "scope" : "test",
+                "systemPath" : null
+            }, {
+                "groupId" : "com.google.guava",
+                "artifactId" : "guava",
+                "version" : "18.0",
+                "scope" : "test",
+                "systemPath" : null
+            } ]
+        }
+    }
+}
