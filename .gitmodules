@@ -1,6 +1,3 @@
-[submodule "src/test/resources/java-pom-with-dep"]
-	path = src/test/resources/java-pom-with-dep
-	url = git@github.com:sgtest/java-pom-with-dep.git
 [submodule "src/test/resources/openjdk8"]
 	path = src/test/resources/openjdk8
 	url = git@github.com:jdkmirrors/openjdk8.git
