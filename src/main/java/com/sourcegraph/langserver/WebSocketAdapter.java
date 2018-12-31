@@ -23,6 +23,8 @@ public class WebSocketAdapter extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
+        // NEXT
+        System.out.println("# HERE");
         LanguageService2 ls = new LanguageService2();
         languageServers.put(conn, ls);
     }
@@ -43,6 +45,7 @@ public class WebSocketAdapter extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
+        log.error("Error starting websocket server", ex);
         // TODO
     }
 
