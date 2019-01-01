@@ -53,7 +53,7 @@ public class Workspaces {
             log.warn("Unexpected error attempting to read javaconfig.json: {}", e);
         }
 
-        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively("file:///");
+        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively(rootUri);
         List<String> allUris = Lists.newArrayListWithCapacity(allFiles.size());
         List<String> pomUris = Lists.newArrayList();
         List<String> gradleUris = Lists.newArrayList();
@@ -137,6 +137,7 @@ public class Workspaces {
         ImmutableMap<String, MavenWorkspaceModelResolver.PomInfo> pomInfos = mavenWorkspaceModelResolver.getPomInfos();
         for (Map.Entry<String, MavenWorkspaceModelResolver.PomInfo> e : pomInfos.entrySet()) {
             String workspaceUri = e.getValue().workspaceUri;
+            // NEXT: is this an absolute or relative file path?
             String baseDir = LanguageUtils.uriToPath(workspaceUri).toString();
             try {
                 EffectivePom effectivePom = EffectivePom.createAndResolve(baseDir, e.getValue().rawModel, mavenWorkspaceModelResolver, e.getValue().compilerOptions, msgs, servers);
