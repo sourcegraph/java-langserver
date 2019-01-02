@@ -5,12 +5,16 @@ import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
 import com.sourcegraph.langserver.langservice.workspace.Workspaces;
 import com.sourcegraph.lsp.FileContentProvider;
+import com.sourcegraph.lsp.LSPConnection;
 import com.sourcegraph.lsp.NoopMessenger;
 import com.sourcegraph.lsp.domain.Mapper;
 import com.sourcegraph.lsp.domain.Method;
 import com.sourcegraph.lsp.domain.Request;
+import com.sourcegraph.lsp.domain.Response;
 import com.sourcegraph.lsp.domain.params.InitializeParams;
+import com.sourcegraph.lsp.domain.result.InitializeResult;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;
+import com.sourcegraph.lsp.domain.structures.ServerCapabilities;
 import com.sourcegraph.lsp.jsonrpc.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +39,10 @@ public class LanguageService2 {
 
     private FileContentProvider files;
 
-    public LanguageService2() {
+    private LSPConnection lspConn;
+
+    public LanguageService2(LSPConnection lspConn) {
+        this.lspConn = lspConn;
     }
 
     // TODO: add connection later
@@ -45,7 +52,8 @@ public class LanguageService2 {
             switch (method) {
                 case INITIALIZE:
                     Request<InitializeParams> req = Mapper.convertMessageToRequest(message, InitializeParams.class);
-                    initialize(req.getParams());
+                    InitializeResult result = initialize(req.getParams());
+                    lspConn.send(new Response<InitializeResult>().withId(req.getId()).withResult(result));
                     break;
 //            case SHUTDOWN:
 //                handleRequest(messageHandlers::shutdown, Void.class, message);
@@ -77,9 +85,10 @@ public class LanguageService2 {
 //            case TEXT_DOCUMENT_DID_OPEN:
 //                handleRequest(messageHandlers::textDocumentDidOpen, DidOpenTextDocumentParams.class, message);
 //                break;
-//            case TEXT_DOCUMENT_HOVER:
+            case TEXT_DOCUMENT_HOVER:
+                System.out.println("# HOVER");
 //                handleRequest(messageHandlers::textDocumentHover, TextDocumentPositionParams.class, message);
-//                break;
+                break;
 //            case TEXT_DOCUMENT_REFERENCES:
 //                handleRequest(messageHandlers::textDocumentReferences, ReferenceParams.class, message);
 //                break;
@@ -112,7 +121,7 @@ public class LanguageService2 {
         // TODO
     }
 
-    public void initialize(InitializeParams p) throws Exception {
+    public InitializeResult initialize(InitializeParams p) throws Exception {
         remoteRootURI = p.getRootUri();
 
         // TODO(beyang): get cache container from params
@@ -129,5 +138,10 @@ public class LanguageService2 {
         this.workspaceManager = workspaceManager;
         this.compiler = new CompilerService(workspaceManager);
         this.files = files;
+
+        return new InitializeResult().withCapabilities(new ServerCapabilities());
     }
+
+//    public
+
 }

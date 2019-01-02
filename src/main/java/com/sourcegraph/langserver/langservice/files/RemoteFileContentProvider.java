@@ -73,7 +73,7 @@ public class RemoteFileContentProvider implements FileContentProvider {
         String remoteURI = remoteRootURI + baseUri.substring("file://".length());
         return Files.walk(Paths.get(uriToCachePath(remoteURI)))
                 .filter(Files::isRegularFile)
-                .map(u -> new TextDocumentIdentifier().withUri(localToRemoteUri("file://" + u.toString())))
+                .map(u -> new TextDocumentIdentifier().withUri(cachePathToLegacyUri(u)))
                 .collect(Collectors.toList());
     }
 
@@ -124,6 +124,11 @@ public class RemoteFileContentProvider implements FileContentProvider {
 
     private String cacheRootDir() {
         return Paths.get(cacheContainer.toString(), "root").toString();
+    }
+
+    private String cachePathToLegacyUri(Path path) {
+        String cacheRoot = uriToCachePath(remoteRootURI.toString());
+        return "file:///" + Paths.get(cacheRoot).relativize(path).toString();
     }
 
     private void fetchTree(String remoteUri, String localPath) {

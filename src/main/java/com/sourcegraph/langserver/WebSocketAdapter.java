@@ -1,6 +1,7 @@
 package com.sourcegraph.langserver;
 
 import com.sourcegraph.langserver.langservice.LanguageService2;
+import com.sourcegraph.lsp.LSPConnection;
 import com.sourcegraph.lsp.domain.Mapper;
 import com.sourcegraph.lsp.jsonrpc.Message;
 import org.java_websocket.WebSocket;
@@ -18,7 +19,6 @@ public class WebSocketAdapter extends WebSocketServer {
 
     private ConcurrentHashMap<WebSocket, LanguageService2> languageServers;
 
-
     public WebSocketAdapter(int port) {
         super(new InetSocketAddress(port));
         this.languageServers = new ConcurrentHashMap<>();
@@ -26,7 +26,8 @@ public class WebSocketAdapter extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        LanguageService2 ls = new LanguageService2();
+        LSPConnection lspConn = new LSPConnection(conn);
+        LanguageService2 ls = new LanguageService2(lspConn);
         languageServers.put(conn, ls);
     }
 
