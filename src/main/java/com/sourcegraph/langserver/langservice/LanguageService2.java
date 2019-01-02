@@ -1,5 +1,6 @@
 package com.sourcegraph.langserver.langservice;
 
+import com.sourcegraph.langserver.langservice.compiler.LanguageData;
 import com.sourcegraph.langserver.langservice.files.RemoteFileContentProvider;
 import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
@@ -12,16 +13,25 @@ import com.sourcegraph.lsp.domain.Method;
 import com.sourcegraph.lsp.domain.Request;
 import com.sourcegraph.lsp.domain.Response;
 import com.sourcegraph.lsp.domain.params.InitializeParams;
+import com.sourcegraph.lsp.domain.params.TextDocumentPositionParams;
 import com.sourcegraph.lsp.domain.result.InitializeResult;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;
+import com.sourcegraph.lsp.domain.structures.Hover;
+import com.sourcegraph.lsp.domain.structures.MarkedString;
+import com.sourcegraph.lsp.domain.structures.Position;
 import com.sourcegraph.lsp.domain.structures.ServerCapabilities;
 import com.sourcegraph.lsp.jsonrpc.Message;
+import com.sourcegraph.utils.LanguageUtils;
+import com.sourcegraph.utils.Util;
+import com.sun.source.util.TreePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.lang.model.element.Element;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * LanguageService2 is the core of the language server. It defines LSP endpoint methods and maintains
@@ -35,7 +45,7 @@ public class LanguageService2 {
 
     private WorkspaceManager workspaceManager;
 
-    private CompilerService compiler;
+    private CompilerService compilerService;
 
     private FileContentProvider files;
 
@@ -45,15 +55,33 @@ public class LanguageService2 {
         this.lspConn = lspConn;
     }
 
+    private String convertURI(String remoteURI) {
+        try {
+            URL remoteRoot = new URL(remoteRootURI);
+            URL remote = new URL(remoteURI);
+            if (!remoteRoot.getHost().equals(remote.getHost())) {
+                throw new Exception("bad remoteURI");
+            }
+            if (!remote.getPath().startsWith(remoteRoot.getPath())) {
+                throw new Exception("bad remoteURI");
+            }
+            return "file:///" + remote.getPath().substring(remoteRoot.getPath().length());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // TODO: add connection later
     public void dispatch(Message message) {
+        Map<String, Object> ctx = new ConcurrentHashMap<>();
+
         try {
             Method method = Method.fromString(message.getMethod());
             switch (method) {
                 case INITIALIZE:
-                    Request<InitializeParams> req = Mapper.convertMessageToRequest(message, InitializeParams.class);
-                    InitializeResult result = initialize(req.getParams());
-                    lspConn.send(new Response<InitializeResult>().withId(req.getId()).withResult(result));
+                    Request<InitializeParams> initReq = Mapper.convertMessageToRequest(message, InitializeParams.class);
+                    InitializeResult result = initialize(initReq.getParams());
+                    lspConn.send(new Response<InitializeResult>().withId(initReq.getId()).withResult(result));
                     break;
 //            case SHUTDOWN:
 //                handleRequest(messageHandlers::shutdown, Void.class, message);
@@ -86,8 +114,14 @@ public class LanguageService2 {
 //                handleRequest(messageHandlers::textDocumentDidOpen, DidOpenTextDocumentParams.class, message);
 //                break;
             case TEXT_DOCUMENT_HOVER:
-                System.out.println("# HOVER");
-//                handleRequest(messageHandlers::textDocumentHover, TextDocumentPositionParams.class, message);
+                Request<TextDocumentPositionParams> hoverReq = Mapper.convertMessageToRequest(message, TextDocumentPositionParams.class);
+                hoverReq.getParams().getTextDocument().setUri(
+                        convertURI(hoverReq.getParams().getTextDocument().getUri())
+                );
+                Hover hover = hover(hoverReq.getParams(), ctx);
+                lspConn.send(new Response<Hover>()
+                        .withId(hoverReq.getId())
+                        .withResult(hover));
                 break;
 //            case TEXT_DOCUMENT_REFERENCES:
 //                handleRequest(messageHandlers::textDocumentReferences, ReferenceParams.class, message);
@@ -136,12 +170,57 @@ public class LanguageService2 {
         WorkspaceManager workspaceManager = new WorkspaceManager(workspaces, files);
 
         this.workspaceManager = workspaceManager;
-        this.compiler = new CompilerService(workspaceManager);
+        this.compilerService = new CompilerService(workspaceManager);
         this.files = files;
 
         return new InitializeResult().withCapabilities(new ServerCapabilities());
     }
 
-//    public
+    public Hover hover(TextDocumentPositionParams textDocumentPosition, Map<String, Object> ctx) {
+        Util.Timer t = Util.timeStartQuiet("textDocument/hover");
+        Workspace workspace = workspaceManager.getWorkspaceContainingUri(textDocumentPosition.getTextDocument().getUri());
+        Optional<LanguageData> shallowHover = findHover(textDocumentPosition, ctx);
+        Optional<LanguageData> deepHover = shallowHover.flatMap(h -> getDefinitionFromHover(h, workspace, ctx));
+        List<MarkedString> hoverContents = deepHover.map(Optional::of)
+                .orElse(shallowHover)
+                .map(LanguageData::getData)
+                .orElse(Collections.emptyList());
+        t.end();
+        return new Hover().withContents(hoverContents);
+    }
 
+
+    private Optional<LanguageData> findHover(TextDocumentPositionParams textDocumentPosition, Map<String, Object> ctx) {
+        return findHover(textDocumentPosition.getTextDocument().getUri(), textDocumentPosition.getPosition(), ctx);
+    }
+
+    private Optional<LanguageData> findHover(String uri, Position position, Map<String, Object> ctx) {
+        return compilerService
+                .analyze(uri, ctx)
+                .flatMap(compilationResult -> compilationResult.findHover(position));
+    }
+
+    private Optional<LanguageData> getDefinitionFromHover(LanguageData hoverData, Workspace workspace, Map<String, Object> ctx) {
+        try {
+            Element refElement = hoverData.getElement();
+            Element defContainer = LanguageUtils.getTopLevelClass(refElement);
+            if (defContainer == null) return Optional.empty();
+            String defName = LanguageUtils.getQualifiedName(defContainer);
+
+            if (LanguageUtils.isTopLevel(defContainer.getKind())) {
+                return compilerService.getDeclaredType(defName)
+                        .flatMap(defResult -> defResult.findDefinition(refElement, hoverData.getTypeMirror()));
+            } else {
+                TreePath defTreePath = workspace.getCompiler().getTrees().getPath(defContainer);
+                if (defTreePath == null) return Optional.empty();
+                return compilerService
+                        .analyze(defTreePath.getCompilationUnit().getSourceFile(), workspace, ctx)
+                        .flatMap(defResult -> defResult.findDefinition(defContainer, refElement, hoverData.getTypeMirror()));
+            }
+        } catch (Exception e) {
+            log.error("Error searching for definition");
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
 }
