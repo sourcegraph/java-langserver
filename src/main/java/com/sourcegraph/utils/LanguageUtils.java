@@ -10,9 +10,7 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +19,31 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LanguageUtils {
+
+    // TODO(beyang): kludge
+    public static String relativePath(String baseUri, String uri) {
+        try {
+            URL base = new URL(baseUri);
+            URL tip = new URL(uri);
+
+            if (!base.getProtocol().equals(tip.getProtocol())) {
+                return null;
+            }
+            if (!base.getHost().equals(tip.getHost())) {
+                return null;
+            }
+            if (!tip.getPath().startsWith(base.getPath())) {
+                return null;
+            }
+            String relPath = tip.getPath().substring(base.getPath().length());
+            if (!relPath.startsWith("/")) {
+                relPath = "/" + relPath;
+            }
+            return relPath;
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
 
     public static Element getTopLevelClass(Element element) {
         Element highestClass = null;

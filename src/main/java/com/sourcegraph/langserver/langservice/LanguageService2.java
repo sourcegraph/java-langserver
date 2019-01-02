@@ -1,7 +1,5 @@
 package com.sourcegraph.langserver.langservice;
 
-import com.sourcegraph.langserver.langservice.files.CachingFileContentProvider;
-import com.sourcegraph.langserver.langservice.files.OverlayContentProvider;
 import com.sourcegraph.langserver.langservice.files.RemoteFileContentProvider;
 import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
@@ -20,8 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * LanguageService2 is the core of the language server. It defines LSP endpoint methods and maintains
@@ -31,7 +27,7 @@ public class LanguageService2 {
 
     private static Logger log = LoggerFactory.getLogger(LanguageService2.class);
 
-    private String rootURI;
+    private String remoteRootURI;
 
     private WorkspaceManager workspaceManager;
 
@@ -117,16 +113,17 @@ public class LanguageService2 {
     }
 
     public void initialize(InitializeParams p) throws Exception {
-        rootURI = p.getRootUri();
+        remoteRootURI = p.getRootUri();
 
         // TODO(beyang): get cache container from params
         File cacheRoot = new File("/tmp/eclipse.jdt.ls.cache");
         cacheRoot.mkdirs();
 
-        FileContentProvider files = new RemoteFileContentProvider(rootURI, cacheRoot);
+        String fakeRootURI = "file:///";
+        FileContentProvider files = new RemoteFileContentProvider(remoteRootURI, cacheRoot);
         // TODO(beyang): keep?
         ArrayList<WorkspaceConfigurationServersResult.Server> servers = new ArrayList<>();
-        List<Workspace> workspaces = Workspaces.fromFiles(rootURI, files, new NoopMessenger(), servers);
+        List<Workspace> workspaces = Workspaces.fromFiles(fakeRootURI, files, new NoopMessenger(), servers);
         WorkspaceManager workspaceManager = new WorkspaceManager(workspaces, files);
 
         this.workspaceManager = workspaceManager;

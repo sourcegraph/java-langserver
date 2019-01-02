@@ -21,6 +21,10 @@ import java.util.zip.ZipInputStream;
  */
 public class RemoteFileContentProvider implements FileContentProvider {
 
+    /**
+     * remoteRootURI is the remote root URI, e.g.,
+     * "https://${TOKEN}@sourcegraph.com/github.com/apache/commons-io@4daab02fb7d967a39eb15fe33f0d5350fc548a98/-/raw/"
+     */
     private URL remoteRootURI;
 
     private File cacheContainer;
@@ -37,8 +41,18 @@ public class RemoteFileContentProvider implements FileContentProvider {
         fetchTree(remoteRootURI, uriToCachePath(remoteRootURI));
     }
 
+    // TODO(beyang): change? (deals with old-style URIs)
     @Override
     public InputStream readContent(String uri) throws Exception {
+        if (!uri.startsWith("file://")) {
+            throw new Exception("bad URI");
+        }
+        String remoteURI = remoteRootURI + uri.substring("file://".length());
+        return new FileInputStream(uriToCachePath(remoteURI));
+    }
+
+    // TODO: this should be the new readContent, if the URIs are switched over.
+    public InputStream readContentNew(String uri) throws Exception {
         URL parsedURI = new URL(uri);
         if (!parsedURI.getHost().equals(remoteRootURI.getHost())) {
             throw new IllegalArgumentException("requested URI was not a sub-URI");
@@ -50,8 +64,20 @@ public class RemoteFileContentProvider implements FileContentProvider {
         return new FileInputStream(path);
     }
 
+    // TODO(beyang): change? (deals with old-style URIs)
     @Override
     public List<TextDocumentIdentifier> listFilesRecursively(String baseUri) throws Exception {
+        if (!(baseUri.startsWith("file://"))) {
+            throw new Exception("bad URI");
+        }
+        String remoteURI = remoteRootURI + baseUri.substring("file://".length());
+        return Files.walk(Paths.get(uriToCachePath(remoteURI)))
+                .filter(Files::isRegularFile)
+                .map(u -> new TextDocumentIdentifier().withUri(localToRemoteUri("file://" + u.toString())))
+                .collect(Collectors.toList());
+    }
+
+    public List<TextDocumentIdentifier> listFilesRecursivelyNew(String baseUri) throws Exception {
         return Files.walk(Paths.get(uriToCachePath(baseUri)))
                 .filter(Files::isRegularFile)
                 .map(u -> new TextDocumentIdentifier().withUri(localToRemoteUri("file://" + u.toString())))
