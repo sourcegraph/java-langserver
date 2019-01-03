@@ -82,7 +82,7 @@ public class Controller implements FileContentProvider, PartialResultStreamer, M
 //                               Function<Controller, MessageHandlerService> handlerSupplier,
 //                               Function<Controller, Tracer> tracerSupplier,
 //                               boolean logRequests) {
-//        WebSocketAdapter webSocketController = new WebSocketAdapter();
+//        LSPWebSocketServer webSocketController = new LSPWebSocketServer();
 //        webSocketController.start();
 //    }
 

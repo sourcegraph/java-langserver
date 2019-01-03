@@ -70,7 +70,7 @@ public class App2 {
                     ((double)runtime.totalMemory()/BYTES_TO_GIGABYTES),
                     ((double)runtime.maxMemory()/BYTES_TO_GIGABYTES)));
 
-            WebSocketAdapter wss = new WebSocketAdapter(port);
+            LSPWebSocketServer wss = new LSPWebSocketServer(port);
             wss.start();
 
             synchronized (this) {

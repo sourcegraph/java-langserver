@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class WebSocketAdapter extends WebSocketServer {
+public class LSPWebSocketServer extends WebSocketServer {
 
-    private static final Logger log = LoggerFactory.getLogger(WebSocketAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(LSPWebSocketServer.class);
 
     private ConcurrentHashMap<WebSocket, LanguageService2> languageServers;
 
-    public WebSocketAdapter(int port) {
+    public LSPWebSocketServer(int port) {
         super(new InetSocketAddress(port));
         this.languageServers = new ConcurrentHashMap<>();
     }

@@ -6,7 +6,7 @@ import org.java_websocket.WebSocket;
 import java.util.function.Function;
 
 /**
- * TODO(beyang): make true two-way connection, integrate with WebSocketAdapter class...
+ * TODO(beyang): make true two-way connection, integrate with LSPWebSocketServer class...
  */
 public class LSPConnection {
 
