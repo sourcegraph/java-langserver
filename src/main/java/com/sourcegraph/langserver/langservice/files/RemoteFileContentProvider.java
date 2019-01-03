@@ -82,7 +82,7 @@ public class RemoteFileContentProvider implements FileContentProvider {
         String cachePath = uriToCachePath(baseUri);
         return Files.walk(Paths.get(cachePath))
                 .filter(Files::isRegularFile)
-                .map(u -> new TextDocumentIdentifier().withUri(localToRemoteUri("file://" + u.toString())))
+                .map(u -> new TextDocumentIdentifier().withUri(cachePathToUri(u.toString())))
                 .collect(Collectors.toList());
     }
 
@@ -95,6 +95,17 @@ public class RemoteFileContentProvider implements FileContentProvider {
             //			return Paths.get(cacheRootDir(), url.getProtocol(), url.getHost(), url.getPath().replace("/", File.separator)).toString();
             return Paths.get(cacheRootDir(), url.getProtocol(), url.getHost(), url.getPath().replace("/", File.separator)).toString();
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String cachePathToUri(String cachePath) {
+        try {
+            String rootPath = uriToCachePath(remoteRootURI.toString());
+            Path rel = Paths.get(rootPath).relativize(Paths.get(cachePath));
+            return new URL(remoteRootURI, rel.toString()).toString();
+        } catch (Exception e) {
+            // TODO(beyang)
             throw new RuntimeException(e);
         }
     }

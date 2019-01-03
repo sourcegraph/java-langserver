@@ -1,6 +1,7 @@
 package com.sourcegraph.utils;
 
 import com.sourcegraph.lsp.domain.structures.SymbolKind;
+import com.sun.javafx.fxml.builder.URLBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -126,17 +127,19 @@ public class LanguageUtils {
     /**
      * Joins two path-like strings by simply concatenating them regardless of the semantics of the path. Tries not to
      * add more slashes between path elements if they're not necessary.
-     * @param left left path
+     * @param root root path
      * @param right right path
      * @return the joined path
      */
-    public static String concatPath(String left, String right) {
-        if (!left.endsWith("/") && !right.startsWith("/")) {
-            return left + "/" + right;
-        } else if (left.equals("file:///") && right.startsWith("/")) {
-            return left;
+    public static String concatPath(String root, String right) {
+        if (!root.endsWith("/") && !right.startsWith("/")) {
+            return root + "/" + right;
+        } else if (root.equals("file:///") && right.startsWith("/")) {
+            return root;
+        } else if (root.endsWith("/") && right.startsWith("/")) {
+            return root + StringUtils.removeStart(right, "/");
         } else {
-            return left + right;
+            return root + right;
         }
     }
 

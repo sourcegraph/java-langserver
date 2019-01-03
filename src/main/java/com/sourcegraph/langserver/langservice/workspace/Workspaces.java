@@ -152,8 +152,7 @@ public class Workspaces {
 
         List<Workspace> workspaces = new ArrayList<>();
         for (Map.Entry<String, EffectivePom> e : effectivePoms.entrySet()) {
-            String baseDir = LanguageUtils.relativePath(rootUri, e.getKey());
-            workspaces.add(new MavenWorkspace(files, baseDir, e.getValue(), effectivePoms.values()));
+            workspaces.add(new MavenWorkspace(files, e.getKey(), e.getValue(), effectivePoms.values()));
         }
         return workspaces;
     }

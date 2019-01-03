@@ -115,9 +115,6 @@ public class LanguageService2 {
 //                break;
             case TEXT_DOCUMENT_HOVER:
                 Request<TextDocumentPositionParams> hoverReq = Mapper.convertMessageToRequest(message, TextDocumentPositionParams.class);
-                hoverReq.getParams().getTextDocument().setUri(
-                        convertURI(hoverReq.getParams().getTextDocument().getUri())
-                );
                 Hover hover = hover(hoverReq.getParams(), ctx);
                 lspConn.send(new Response<Hover>()
                         .withId(hoverReq.getId())

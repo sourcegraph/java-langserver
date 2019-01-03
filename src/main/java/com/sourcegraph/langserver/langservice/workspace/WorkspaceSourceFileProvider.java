@@ -5,6 +5,7 @@ import com.sourcegraph.utils.LanguageUtils;
 import com.sourcegraph.langserver.langservice.javaconfigjson.Project;
 import com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier;
 import com.sourcegraph.utils.ExecutorUtils;
+import com.sun.tools.internal.xjc.Language;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -31,7 +32,6 @@ public class WorkspaceSourceFileProvider {
 
     private FileContentProvider files;
 
-    // NEXT: audit usages of rootURI (from rootDir)
     private String rootURI;
 
     /**
@@ -156,38 +156,35 @@ public class WorkspaceSourceFileProvider {
      * getSourceFileFutures.
      */
     private SourceFile fetchSourceFile(String uri) throws Exception {
-        Path path = LanguageUtils.uriToPath(uri);
         String content = IOUtils.toString(files.readContent(uri), StandardCharsets.UTF_8);
-        String vfsPath = LanguageUtils.vfsPath(path);
         SourceFile sourceFile = new SourceFile(
-                vfsPath,
-                SourceFile.pathToBinaryName(relPath(path)),
+                uri,
+                SourceFile.pathToBinaryName(relPath(uri)),
                 content);
         return sourceFile;
     }
 
-    public String relPath(Path path) throws Exception {
-        String p = LanguageUtils.vfsPath(path);
-        List<Path> sourcePaths = new ArrayList<>();
+    public String relPath(String uri) throws Exception {
+        List<String> sourceURIs = new ArrayList<>();
         for (String d : configProvider.getConfig().getSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootURI, d));
+            sourceURIs.add(LanguageUtils.concatPath(rootURI, d));
         }
         for (String d : configProvider.getConfig().getTestSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootURI, d));
+            sourceURIs.add(LanguageUtils.concatPath(rootURI, d));
         }
 
-        String candidate = relPath(p, sourcePaths);
+        String candidate = relPath(uri, sourceURIs);
         if (candidate != null) {
             return candidate;
         }
-        throw new Exception("could not relativize path " + path.toString());
+        throw new Exception("could not relativize path " + uri);
     }
 
-    private static String relPath(String path, List<Path> prefixes) {
-        for (Path prefix : prefixes) {
-            String root = StringUtils.appendIfMissing(LanguageUtils.vfsPath(prefix), "/");
-            if (path.startsWith(root)) {
-                return StringUtils.removeStart(path, root);
+    private static String relPath(String uri, List<String> prefixes) {
+        for (String prefix : prefixes) {
+            String root = StringUtils.appendIfMissing(prefix, "/");
+            if (uri.startsWith(root)) {
+                return StringUtils.removeStart(uri, root);
             }
         }
         return null;

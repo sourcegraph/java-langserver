@@ -200,8 +200,7 @@ public class JavaConfigWorkspace implements Workspace, ConfigProvider {
             if (!uri.endsWith(".java")) {
                 continue;
             }
-            Path path = LanguageUtils.uriToPath(uri);
-            String pname = sourcePathToPackageName(path);
+            String pname = uriToPackageName(uri);
             newPackageUris.computeIfAbsent(pname, p -> new HashSet<>()).add(uri);
         }
 
@@ -213,8 +212,8 @@ public class JavaConfigWorkspace implements Workspace, ConfigProvider {
         return fileProvider.getSourceUris();
     }
 
-    private String sourcePathToPackageName(Path path) throws Exception {
-        String relPath = fileProvider.relPath(path);
+    private String uriToPackageName(String uri) throws Exception {
+        String relPath = fileProvider.relPath(uri);
         int pos = relPath.lastIndexOf('/');
         if (pos < 0) {
             return StringUtils.EMPTY;

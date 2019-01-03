@@ -184,11 +184,9 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
 
     public boolean containsSourceFile(String uri) throws Exception {
         // Shortcut that doesn't trigger a resolution of source URIs.
-        String path = LanguageUtils.uriToPath(uri).toString();
-        if (!path.startsWith(rootURI)) {
+        if (!uri.startsWith(rootURI)) {
             return false;
         }
-
         return getSourceUris().contains(uri);
     }
 
@@ -204,8 +202,7 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
             if (!uri.endsWith(".java")) {
                 continue;
             }
-            Path path = LanguageUtils.uriToPath(uri);
-            String pname = sourcePathToPackageName(path);
+            String pname = uriToPackageName(uri);
             newPackageUris.computeIfAbsent(pname, p -> new HashSet<>()).add(uri);
         }
 
@@ -213,8 +210,8 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
         return packageUris.getOrDefault(packageName, ImmutableSet.of());
     }
 
-    private String sourcePathToPackageName(Path path) throws Exception {
-        String relPath = fileProvider.relPath(path);
+    private String uriToPackageName(String uri) throws Exception {
+        String relPath = fileProvider.relPath(uri);
         int pos = relPath.lastIndexOf('/');
         if (pos < 0) {
             return StringUtils.EMPTY;
