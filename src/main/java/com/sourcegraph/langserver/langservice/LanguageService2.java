@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Element;
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,22 +52,6 @@ public class LanguageService2 {
 
     public LanguageService2(LSPConnection lspConn) {
         this.lspConn = lspConn;
-    }
-
-    private String convertURI(String remoteURI) {
-        try {
-            URL remoteRoot = new URL(remoteRootURI);
-            URL remote = new URL(remoteURI);
-            if (!remoteRoot.getHost().equals(remote.getHost())) {
-                throw new Exception("bad remoteURI");
-            }
-            if (!remote.getPath().startsWith(remoteRoot.getPath())) {
-                throw new Exception("bad remoteURI");
-            }
-            return "file:///" + remote.getPath().substring(remoteRoot.getPath().length());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     // TODO: add connection later
