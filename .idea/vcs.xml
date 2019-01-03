@@ -2,47 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/AndroidViewAnimations" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/AppIntro" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/EventBus" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/JSON-java" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/MPAndroidChart" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/android-sdk" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/axis2-java" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/commons-io" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/commons-lang" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/cup-of-joe" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/dropwizard" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/dropwizard-snippets" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/elasticsearch" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/glide" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/guava" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/hackthon" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/ion" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-7" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-annotation-arguments" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-design-patterns" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-fake-guava" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-parent-pom" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-pom-with-deps" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-pom-with-deps-javaconfig" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-simple" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-simple-javaconfig" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/java-simple-pom" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/jdom" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/json-patch" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/leakcanary" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/log4j" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/lombok" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/mockito" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/mockito-javaconfig" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/multi-module" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/openjdk8" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/openjdk8-langtools" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/picasso" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/platform_frameworks_support" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/priam" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/servlet-api" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/test/resources/tinker" vcs="Git" />
   </component>
 </project>
