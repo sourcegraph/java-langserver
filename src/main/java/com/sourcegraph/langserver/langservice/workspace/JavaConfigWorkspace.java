@@ -68,7 +68,7 @@ public class JavaConfigWorkspace implements Workspace, ConfigProvider {
 
     public WorkspaceManager getWorkspaceManager() { return workspaceManager; }
 
-    public String getRootDir() {
+    public String getRootURI() {
         return rootDir;
     }
 

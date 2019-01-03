@@ -2,7 +2,6 @@ package com.sourcegraph.langserver.langservice.files;
 
 import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -41,18 +40,19 @@ public class RemoteFileContentProvider implements FileContentProvider {
         fetchTree(remoteRootURI, uriToCachePath(remoteRootURI));
     }
 
-    // TODO(beyang): change? (deals with old-style URIs)
-    @Override
-    public InputStream readContent(String uri) throws Exception {
-        if (!uri.startsWith("file://")) {
-            throw new Exception("bad URI");
-        }
-        String remoteURI = remoteRootURI + uri.substring("file://".length());
-        return new FileInputStream(uriToCachePath(remoteURI));
-    }
+//    // TODO(beyang): change? (deals with old-style URIs)
+//    @Override
+//    public InputStream readContent(String uri) throws Exception {
+//        if (!uri.startsWith("file://")) {
+//            throw new Exception("bad URI");
+//        }
+//        String remoteURI = remoteRootURI + uri.substring("file://".length());
+//        return new FileInputStream(uriToCachePath(remoteURI));
+//    }
 
     // TODO: this should be the new readContent, if the URIs are switched over.
-    public InputStream readContentNew(String uri) throws Exception {
+    @Override
+    public InputStream readContent(String uri) throws Exception {
         URL parsedURI = new URL(uri);
         if (!parsedURI.getHost().equals(remoteRootURI.getHost())) {
             throw new IllegalArgumentException("requested URI was not a sub-URI");
@@ -64,21 +64,23 @@ public class RemoteFileContentProvider implements FileContentProvider {
         return new FileInputStream(path);
     }
 
-    // TODO(beyang): change? (deals with old-style URIs)
+//    // TODO(beyang): change? (deals with old-style URIs)
+//    @Override
+//    public List<TextDocumentIdentifier> listFilesRecursively(String baseUri) throws Exception {
+//        if (!(baseUri.startsWith("file://"))) {
+//            throw new Exception("bad URI");
+//        }
+//        String remoteURI = remoteRootURI + baseUri.substring("file://".length());
+//        return Files.walk(Paths.get(uriToCachePath(remoteURI)))
+//                .filter(Files::isRegularFile)
+//                .map(u -> new TextDocumentIdentifier().withUri(cachePathToLegacyUri(u)))
+//                .collect(Collectors.toList());
+//    }
+
     @Override
     public List<TextDocumentIdentifier> listFilesRecursively(String baseUri) throws Exception {
-        if (!(baseUri.startsWith("file://"))) {
-            throw new Exception("bad URI");
-        }
-        String remoteURI = remoteRootURI + baseUri.substring("file://".length());
-        return Files.walk(Paths.get(uriToCachePath(remoteURI)))
-                .filter(Files::isRegularFile)
-                .map(u -> new TextDocumentIdentifier().withUri(cachePathToLegacyUri(u)))
-                .collect(Collectors.toList());
-    }
-
-    public List<TextDocumentIdentifier> listFilesRecursivelyNew(String baseUri) throws Exception {
-        return Files.walk(Paths.get(uriToCachePath(baseUri)))
+        String cachePath = uriToCachePath(baseUri);
+        return Files.walk(Paths.get(cachePath))
                 .filter(Files::isRegularFile)
                 .map(u -> new TextDocumentIdentifier().withUri(localToRemoteUri("file://" + u.toString())))
                 .collect(Collectors.toList());

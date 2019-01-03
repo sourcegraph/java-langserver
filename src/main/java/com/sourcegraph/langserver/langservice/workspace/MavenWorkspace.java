@@ -37,7 +37,8 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
 
     // An absolute path that indicates the root directory of this workspace
     // from the root of the entire repository.
-    private String rootDir;
+    private String rootURI;
+
     private WorkspaceSourceFileProvider fileProvider;
     private JavacHolder compiler;
 
@@ -59,15 +60,15 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
 
     public MavenWorkspace(
             FileContentProvider files,
-            String rootDir,
+            String rootURI,
             EffectivePom effectivePom,
             Collection<EffectivePom> allEffectivePoms
     ) {
-        this.rootDir = rootDir;
+        this.rootURI= rootURI;
         this.effectivePom = effectivePom;
         this.allEffectivePoms = Lists.newArrayList(allEffectivePoms);
         this.jarClassUriToPackageIdentifier = new ConcurrentHashMap<>();
-        this.fileProvider = new WorkspaceSourceFileProvider(files, rootDir, this);
+        this.fileProvider = new WorkspaceSourceFileProvider(files, rootURI, this);
     }
 
     public void setWorkspaceManager(WorkspaceManager w) {
@@ -76,8 +77,8 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
 
     public WorkspaceManager getWorkspaceManager() { return workspaceManager; }
 
-    public String getRootDir() {
-        return rootDir;
+    public String getRootURI() {
+        return rootURI;
     }
 
     public Set<JavaFileObject> getPackageSourceFileObjects(String packageName) throws Exception {
@@ -166,7 +167,7 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
         }
 
         deps.sort(DependencyReference.comparator);
-        return PackageInformation.of(new PackageDescriptor(getThisArtifactIdentifier(), rootDir), deps);
+        return PackageInformation.of(new PackageDescriptor(getThisArtifactIdentifier(), rootURI), deps);
     }
 
     public Set<PackageIdentifier> getDependencies() {
@@ -184,7 +185,7 @@ public class MavenWorkspace implements Workspace, ConfigProvider {
     public boolean containsSourceFile(String uri) throws Exception {
         // Shortcut that doesn't trigger a resolution of source URIs.
         String path = LanguageUtils.uriToPath(uri).toString();
-        if (!path.equals(rootDir) && !path.startsWith(rootDir)) {
+        if (!path.startsWith(rootURI)) {
             return false;
         }
 

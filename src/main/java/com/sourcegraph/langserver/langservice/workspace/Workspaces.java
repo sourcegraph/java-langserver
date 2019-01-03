@@ -53,7 +53,7 @@ public class Workspaces {
             log.warn("Unexpected error attempting to read javaconfig.json: {}", e);
         }
 
-        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively("file:///");
+        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively(rootUri);
         List<String> allUris = Lists.newArrayListWithCapacity(allFiles.size());
         List<String> pomUris = Lists.newArrayList();
         List<String> gradleUris = Lists.newArrayList();

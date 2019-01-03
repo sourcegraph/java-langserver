@@ -222,7 +222,7 @@ public class LanguageService {
         // note that these loops can be interrupted; the intention is that we cancel any long-running computations if
         // the session is shut down
         for (Workspace workspace : workspaceManager.getWorkspaces()) {
-            t.debug("workspace/references starting workspace", "workspace", workspace.getRootDir());
+            t.debug("workspace/references starting workspace", "workspace", workspace.getRootURI());
             if (Thread.currentThread().isInterrupted()) {
                 return Collections.emptyList();
             }
@@ -279,7 +279,7 @@ public class LanguageService {
                     accumulator.add(streamedReference.getLocation());
                 }
             }
-            t.log("workspace/references finished workspace", "workspace", workspace.getRootDir());
+            t.log("workspace/references finished workspace", "workspace", workspace.getRootURI());
         }
 
         // we can't sort streaming refs, so only sort if they're non-streaming

@@ -31,7 +31,8 @@ public class WorkspaceSourceFileProvider {
 
     private FileContentProvider files;
 
-    private String rootDir;
+    // NEXT: audit usages of rootURI (from rootDir)
+    private String rootURI;
 
     /**
      * sourceFileFutures is a map from file URI to CompletableFuture resolving to a JavaFileObject made from the file
@@ -48,14 +49,14 @@ public class WorkspaceSourceFileProvider {
     // map from JavaFileObject.toURI() to PackageIdentifier (threadsafe)
     private Set<URI> fetchedSourceFileUris;
 
-    public WorkspaceSourceFileProvider(FileContentProvider files, String rootDir, ConfigProvider configProvider) {
+
+    public WorkspaceSourceFileProvider(FileContentProvider files, String rootURI, ConfigProvider configProvider) {
         this.files = files;
-        this.rootDir = rootDir;
+        this.rootURI = rootURI;
         this.configProvider = configProvider;
 
         this.fetchedSourceFileUris = ConcurrentHashMap.newKeySet();
     }
-
 
     public Set<String> getSourceUris() {
         if (sourceUris != null) {
@@ -67,10 +68,9 @@ public class WorkspaceSourceFileProvider {
                 return sourceUris;
             }
 
-            String rootURI = "file://" + rootDir;
             List<TextDocumentIdentifier> allFiles;
             try {
-                allFiles = files.listFilesRecursively("file:///");
+                allFiles = files.listFilesRecursively(rootURI);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -170,10 +170,10 @@ public class WorkspaceSourceFileProvider {
         String p = LanguageUtils.vfsPath(path);
         List<Path> sourcePaths = new ArrayList<>();
         for (String d : configProvider.getConfig().getSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootDir, d));
+            sourcePaths.add(Paths.get(rootURI, d));
         }
         for (String d : configProvider.getConfig().getTestSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootDir, d));
+            sourcePaths.add(Paths.get(rootURI, d));
         }
 
         String candidate = relPath(p, sourcePaths);

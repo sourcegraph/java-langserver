@@ -162,11 +162,10 @@ public class LanguageService2 {
         File cacheRoot = new File("/tmp/eclipse.jdt.ls.cache");
         cacheRoot.mkdirs();
 
-        String fakeRootURI = "file:///";
         FileContentProvider files = new RemoteFileContentProvider(remoteRootURI, cacheRoot);
         // TODO(beyang): keep?
         ArrayList<WorkspaceConfigurationServersResult.Server> servers = new ArrayList<>();
-        List<Workspace> workspaces = Workspaces.fromFiles(fakeRootURI, files, new NoopMessenger(), servers);
+        List<Workspace> workspaces = Workspaces.fromFiles(remoteRootURI, files, new NoopMessenger(), servers);
         WorkspaceManager workspaceManager = new WorkspaceManager(workspaces, files);
 
         this.workspaceManager = workspaceManager;
