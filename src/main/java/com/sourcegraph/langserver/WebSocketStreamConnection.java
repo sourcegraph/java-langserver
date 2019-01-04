@@ -17,14 +17,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebSocketStreamConnection {
 
-    private static ExecutorService executorService = new ThreadPoolExecutor(
-            2,
-            5,
-            60,
-            TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>()
-    );
-
     WebSocket conn;
 
     /**

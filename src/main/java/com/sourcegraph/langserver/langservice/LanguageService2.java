@@ -168,7 +168,6 @@ public class LanguageService2 {
         return new Hover().withContents(hoverContents);
     }
 
-
     private Optional<LanguageData> findHover(TextDocumentPositionParams textDocumentPosition, Map<String, Object> ctx) {
         return findHover(textDocumentPosition.getTextDocument().getUri(), textDocumentPosition.getPosition(), ctx);
     }

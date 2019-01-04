@@ -1,9 +1,14 @@
 package com.sourcegraph.langserver;
 
+import com.sourcegraph.langserver.langservice.JavacLanguageServer;
 import com.sourcegraph.langserver.langservice.LanguageService2;
 import com.sourcegraph.lsp.LSPConnection;
 import com.sourcegraph.lsp.domain.Mapper;
 import com.sourcegraph.lsp.jsonrpc.Message;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -19,17 +24,32 @@ public class LSPWebSocketServer extends WebSocketServer {
 
     private ConcurrentHashMap<WebSocket, LanguageService2> languageServers;
 
+    private ConcurrentHashMap<WebSocket, WebSocketStreamConnection> connections;
+
     public LSPWebSocketServer(int port) {
         super(new InetSocketAddress(port));
-        this.languageServers = new ConcurrentHashMap<>();
+//        this.languageServers = new ConcurrentHashMap<>();
+        this.connections = new ConcurrentHashMap<>();
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        LSPConnection lspConn = new LSPConnection(conn);
-        LanguageService2 ls = new LanguageService2(lspConn);
-        languageServers.put(conn, ls);
+        WebSocketStreamConnection wsConn = new WebSocketStreamConnection(conn);
+        connections.put(conn, wsConn);
+        JavacLanguageServer ls = new JavacLanguageServer();
+        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(ls, wsConn.in(), wsConn.out());// TODO(beyang): use other constructor to add tracing and validation
+        ls.connect(launcher.getRemoteProxy());
+        launcher.startListening();
+
+        // NEXT: why doesn't hover work?
     }
+
+//    @Override
+//    public void onOpen(WebSocket conn, ClientHandshake handshake) {
+//        LSPConnection lspConn = new LSPConnection(conn);
+//        LanguageService2 ls = new LanguageService2(lspConn);
+//        languageServers.put(conn, ls);
+//    }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
@@ -38,14 +58,23 @@ public class LSPWebSocketServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String msg) {
-        LanguageService2 ls = languageServers.get(conn);
-        if (ls == null) {
-            log.error("Did not find LanguageService for connection, dropping message {}", msg);
-            return;
+        try {
+            connections.get(conn).receive(msg);
+        } catch (NullPointerException e) {
+            throw new RuntimeException("Connection not found", e);
         }
-        Message message = Mapper.parseMessage(msg);
-        ls.dispatch(message);
     }
+
+//    @Override
+//    public void onMessage(WebSocket conn, String msg) {
+//        LanguageService2 ls = languageServers.get(conn);
+//        if (ls == null) {
+//            log.error("Did not find LanguageService for connection, dropping message {}", msg);
+//            return;
+//        }
+//        Message message = Mapper.parseMessage(msg);
+//        ls.dispatch(message);
+//    }
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
