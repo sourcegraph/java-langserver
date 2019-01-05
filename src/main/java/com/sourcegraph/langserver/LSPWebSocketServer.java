@@ -1,14 +1,9 @@
 package com.sourcegraph.langserver;
 
 import com.sourcegraph.langserver.langservice.JavacLanguageServer;
-import com.sourcegraph.langserver.langservice.LanguageService2;
-import com.sourcegraph.lsp.LSPConnection;
-import com.sourcegraph.lsp.domain.Mapper;
-import com.sourcegraph.lsp.jsonrpc.Message;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
-import org.eclipse.lsp4j.services.LanguageServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -21,8 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LSPWebSocketServer extends WebSocketServer {
 
     private static final Logger log = LoggerFactory.getLogger(LSPWebSocketServer.class);
-
-    private ConcurrentHashMap<WebSocket, LanguageService2> languageServers;
 
     private ConcurrentHashMap<WebSocket, WebSocketStreamConnection> connections;
 

@@ -5,6 +5,7 @@ import com.sourcegraph.lsp.jsonrpc.Reader;
 import com.sun.tools.internal.ws.wsdl.document.Output;
 import org.java_websocket.WebSocket;
 
+import javax.print.DocFlavor;
 import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -51,21 +52,33 @@ public class WebSocketStreamConnection {
     }
 
     public InputStream in() {
-        return inPipeIn;
+        return new WrappedInputStream(inPipeIn);
     }
 
     public OutputStream out() {
         return outPipeOut;
     }
 
-    // NEXT: hook up receive to WebSocketServer; then plug into lsp4j Launcher
+    public static class WrappedInputStream extends InputStream {
+        InputStream inner;
+        public WrappedInputStream(InputStream inner) {
+            this.inner = inner;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return this.inner.read();
+        }
+    }
 
     /**
      * receive receives incoming messages and writes these to the input stream
      */
     public void receive(String message) {
         try {
-            inPipeOut.write(message.getBytes());
+            byte[] messageBytes = message.getBytes();
+            inPipeOut.write(String.format("Content-Length: %d\r\n\r\n", messageBytes.length).getBytes());
+            inPipeOut.write(messageBytes);
         } catch (Exception e) {
             throw new RuntimeException(e); // TODO(beyang): replace with error
         }

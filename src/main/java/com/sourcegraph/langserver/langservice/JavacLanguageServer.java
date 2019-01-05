@@ -6,7 +6,6 @@ import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
 import com.sourcegraph.langserver.langservice.workspace.Workspaces;
 import com.sourcegraph.lsp.FileContentProvider;
-import com.sourcegraph.lsp.LSPConnection;
 import com.sourcegraph.lsp.NoopMessenger;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;
 import com.sourcegraph.utils.LanguageUtils;
@@ -24,11 +23,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
-
 public class JavacLanguageServer implements LanguageServer, WorkspaceService, TextDocumentService, LanguageClientAware {
 
-    private static Logger log = LoggerFactory.getLogger(LanguageService2.class);
+    private static Logger log = LoggerFactory.getLogger(JavacLanguageServer.class);
 
     private String remoteRootURI;
 
@@ -67,17 +64,35 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
         }
     }
 
+    private static com.sourcegraph.lsp.domain.params.TextDocumentPositionParams toLegacyTextDocumentPositionParams(TextDocumentPositionParams p) {
+        return new com.sourcegraph.lsp.domain.params.TextDocumentPositionParams()
+                .withPosition(com.sourcegraph.lsp.domain.structures.Position.of(p.getPosition().getLine(), p.getPosition().getCharacter()))
+                .withTextDocument(com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier.of(p.getTextDocument().getUri()));
+    }
+
+    private static Location fromLegacyLocation(com.sourcegraph.lsp.domain.structures.Location l) {
+        Location l2 = new Location();
+        l2.setRange(fromLegacyRange(l.getRange()));
+        l2.setUri(l.getUri());
+        return l2;
+    }
+
+    private static Range fromLegacyRange(com.sourcegraph.lsp.domain.structures.Range r) {
+        return new Range(fromLegacyPosition(r.getStart()), fromLegacyPosition(r.getEnd()));
+    }
+
+    private static Position fromLegacyPosition(com.sourcegraph.lsp.domain.structures.Position p) {
+        return new Position(p.getLine(), p.getCharacter());
+    }
+
     @Override
     public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
         Util.Timer t = Util.timeStartQuiet("textDocument/hover");
-        com.sourcegraph.lsp.domain.params.TextDocumentPositionParams legacyParams = new com.sourcegraph.lsp.domain.params.TextDocumentPositionParams()
-                .withPosition(com.sourcegraph.lsp.domain.structures.Position.of(position.getPosition().getLine(), position.getPosition().getCharacter()))
-                .withTextDocument(com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier.of(position.getTextDocument().getUri()));
         Workspace workspace = workspaceManager.getWorkspaceContainingUri(position.getTextDocument().getUri());
 
         // TODO(beyang): remove ctx param from all methods
         Map<String, Object> ctx = new HashMap<>();
-        Optional<LanguageData> shallowHover = findHover(legacyParams, ctx);
+        Optional<LanguageData> shallowHover = findHover(toLegacyTextDocumentPositionParams(position), ctx);
         Optional<LanguageData> deepHover = shallowHover.flatMap(h -> getDefinitionFromHover(h, workspace, ctx));
         List<com.sourcegraph.lsp.domain.structures.MarkedString> legacyHoverContents = deepHover.map(Optional::of)
                 .orElse(shallowHover)
@@ -91,6 +106,20 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
         return CompletableFuture.completedFuture(new Hover(hoverContents));
     }
 
+    @Override
+    public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams p) {
+        Util.Timer t = Util.timeStartQuiet("textDocument/definition");
+        Workspace workspace = workspaceManager.getWorkspaceContainingUri(p.getTextDocument().getUri());
+        Map<String, Object> ctx = new HashMap<>();
+        List<Location> locations = findHover(toLegacyTextDocumentPositionParams(p), ctx)
+                .flatMap(h -> getDefinitionFromHover(h, workspace, ctx))
+                .map(LanguageData::getLocation)
+                .map(JavacLanguageServer::fromLegacyLocation)
+                .map(Collections::singletonList)
+                .orElse(Collections.emptyList());
+        t.end();
+        return CompletableFuture.completedFuture(locations);
+    }
 
     private Optional<LanguageData> findHover(com.sourcegraph.lsp.domain.params.TextDocumentPositionParams textDocumentPosition, Map<String, Object> ctx) {
         return findHover(textDocumentPosition.getTextDocument().getUri(), textDocumentPosition.getPosition(), ctx);
