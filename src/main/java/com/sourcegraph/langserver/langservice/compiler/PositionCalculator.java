@@ -25,8 +25,6 @@ public class PositionCalculator {
 
     private CompilationUnitTree compilationUnit;
 
-    private String fileName;
-
     private String fileUri;
 
     private String content;
@@ -37,12 +35,11 @@ public class PositionCalculator {
         this.sourcePositions = sourcePositions;
         this.compilationUnit = compilationUnit;
         JavaFileObject file = compilationUnit.getSourceFile();
-        this.fileName = file.getName();
-        this.fileUri = LanguageUtils.pathToUri(Paths.get(fileName).toString());
+        this.fileUri = file.getName();
         try {
             this.content = file.getCharContent(true).toString();
         } catch (IOException exception) {
-            log.error("Unable to extract content of {}", fileName);
+            log.error("Unable to extract content of {}", fileUri);
             throw new RuntimeException(exception);
         }
         this.positions = new HashMap<>();
@@ -134,7 +131,7 @@ public class PositionCalculator {
         int endOffset = getEndOffset(tree);
         if (endOffset < 0) endOffset = startOffset;
         return new JavaSourceRange()
-                .withFileName(fileName)
+                .withFileName(fileUri)
                 .withStartOffset(startOffset)
                 .withEndOffset(endOffset);
     }
