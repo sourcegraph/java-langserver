@@ -10,8 +10,6 @@ import com.sourcegraph.langserver.langservice.workspace.Workspaces;
 import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.NoopMessenger;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;
-import com.sourcegraph.lsp.domain.structures.JsonPatch;
-import com.sourcegraph.lsp.domain.structures.JsonPatchOperation;
 import com.sourcegraph.utils.LanguageUtils;
 import com.sourcegraph.utils.Util;
 import com.sun.source.util.TreePath;
@@ -29,9 +27,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * A javac-based implementation of LanguageServer.
+ */
 public class JavacLanguageServer implements LanguageServer, WorkspaceService, TextDocumentService, LanguageClientAware {
 
     private static Logger log = LoggerFactory.getLogger(JavacLanguageServer.class);
+
+    /**
+     * Fields set in the constructor.
+     */
+
+    private String storageDir;
+
+    /**
+     * Fields set on initialization.
+     */
 
     private String remoteRootURI;
 
@@ -43,13 +54,16 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
 
     private LanguageClient client;
 
+    public JavacLanguageServer(String storageDir) {
+        this.storageDir = storageDir;
+    }
+
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams p) {
         remoteRootURI = p.getRootUri();
 
         try {
-            // TODO(beyang): get cache container from params
-            File cacheRoot = new File("/tmp/eclipse.jdt.ls.cache");
+            File cacheRoot = new File(storageDir);
             cacheRoot.mkdirs();
 
             FileContentProvider files = new RemoteFileContentProvider(remoteRootURI, cacheRoot);

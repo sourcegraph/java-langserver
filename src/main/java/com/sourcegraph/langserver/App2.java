@@ -28,10 +28,6 @@ public class App2 {
                 .desc("Listen on given port (2088)")
                 .longOpt("port")
                 .build());
-        options.addOption(Option.builder("f")
-                .desc("Filesystem mode (opposite to default VFS mode)")
-                .longOpt("file")
-                .build());
         options.addOption(Option.builder("l")
                 .argName("level")
                 .hasArg()
@@ -42,24 +38,31 @@ public class App2 {
                 .desc("Show help")
                 .longOpt("help")
                 .build());
+        options.addOption(Option.builder("d")
+                .desc("Directory where files should be stored (default: /tmp/java-ls)")
+                .longOpt("directory")
+                .hasArg()
+                .build());
 
         CommandLineParser parser = new DefaultParser();
         try {
-            // parse the command line arguments
-            CommandLine line = parser.parse(options, args);
-            if (line.hasOption("h")) {
+            // parse the command cl arguments
+            CommandLine cl = parser.parse(options, args);
+            if (cl.hasOption("h")) {
                 new HelpFormatter().printHelp("java-langserver", options);
                 return;
             }
             int port = 2088;
-            if (line.hasOption("p")) {
-                port = Integer.parseInt(line.getOptionValue("p"));
+            if (cl.hasOption("p")) {
+                port = Integer.parseInt(cl.getOptionValue("p"));
             }
+
+            String storageDir = cl.getOptionValue("d", "/tmp/java-ls");
 
             // logging
             ch.qos.logback.classic.Logger mainLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.sourcegraph");
-            if (line.hasOption("l")) {
-                mainLogger.setLevel(Level.valueOf(line.getOptionValue("l")));
+            if (cl.hasOption("l")) {
+                mainLogger.setLevel(Level.valueOf(cl.getOptionValue("l")));
             }
             System.out.println("Logging level (com.sourcegraph,root)=(" + mainLogger.getLevel() + "," + rootLogger.getLevel()+")");
 
@@ -70,7 +73,7 @@ public class App2 {
                     ((double)runtime.totalMemory()/BYTES_TO_GIGABYTES),
                     ((double)runtime.maxMemory()/BYTES_TO_GIGABYTES)));
 
-            LSPWebSocketServer wss = new LSPWebSocketServer(port);
+            LSPWebSocketServer wss = new LSPWebSocketServer(port, storageDir);
             wss.start();
 
             synchronized (this) {

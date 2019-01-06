@@ -1,6 +1,7 @@
 package com.sourcegraph.langserver;
 
 import com.sourcegraph.langserver.langservice.JavacLanguageServer;
+import com.sourcegraph.lsp.jsonrpc.Reader;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -10,43 +11,40 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A WebSocket server that implements a language server over WebSocket.
+ */
 public class LSPWebSocketServer extends WebSocketServer {
 
     private static final Logger log = LoggerFactory.getLogger(LSPWebSocketServer.class);
 
-    private ConcurrentHashMap<WebSocket, WebSocketStreamConnection> connections;
+    private String storageDir;
+    private ConcurrentHashMap<WebSocket, Stream> connections;
 
-    public LSPWebSocketServer(int port) {
+    public LSPWebSocketServer(int port, String storageDir) {
         super(new InetSocketAddress(port));
-//        this.languageServers = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
+        this.storageDir = storageDir;
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        WebSocketStreamConnection wsConn = new WebSocketStreamConnection(conn);
+        Stream wsConn = new Stream(conn);
         connections.put(conn, wsConn);
-        JavacLanguageServer ls = new JavacLanguageServer();
-        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(ls, wsConn.in(), wsConn.out());// TODO(beyang): use other constructor to add tracing and validation
+        JavacLanguageServer ls = new JavacLanguageServer(storageDir);
+        // TODO(beyang): use other constructor to add tracing and validation
+        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(ls, wsConn.in(), wsConn.out());
         ls.connect(launcher.getRemoteProxy());
         launcher.startListening();
-
-        // NEXT: why doesn't hover work?
     }
-
-//    @Override
-//    public void onOpen(WebSocket conn, ClientHandshake handshake) {
-//        LSPConnection lspConn = new LSPConnection(conn);
-//        LanguageService2 ls = new LanguageService2(lspConn);
-//        languageServers.put(conn, ls);
-//    }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        // TODO
+        connections.remove(conn);
     }
 
     @Override
@@ -58,25 +56,87 @@ public class LSPWebSocketServer extends WebSocketServer {
         }
     }
 
-//    @Override
-//    public void onMessage(WebSocket conn, String msg) {
-//        LanguageService2 ls = languageServers.get(conn);
-//        if (ls == null) {
-//            log.error("Did not find LanguageService for connection, dropping message {}", msg);
-//            return;
-//        }
-//        Message message = Mapper.parseMessage(msg);
-//        ls.dispatch(message);
-//    }
-
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        log.error("Error starting websocket server", ex);
-        // TODO
+        log.error("WebSocket error: {}", ex);
     }
 
     @Override
     public void onStart() {
         log.info("Listening for websocket connections");
+    }
+
+    /**
+     * Stream wraps a WebSocket instance (a WebSocket connection) in an InputStream and OutputStream
+     * interface. It assumes JSON-RPC messages (and uses these to determine the WebSocket frame
+     * boundaries when translating from a stream of bytes.
+     */
+    private static class Stream {
+
+        WebSocket conn;
+
+        /**
+         * Output pipe
+         */
+        PipedOutputStream outPipeOut;
+        PipedInputStream outPipeIn;
+
+        /**
+         * Input pipe
+         */
+        PipedOutputStream inPipeOut;
+        PipedInputStream inPipeIn;
+
+
+        public Stream(WebSocket conn) {
+            this.conn = conn;
+
+            try {
+                outPipeIn = new PipedInputStream(100000);
+                outPipeOut = new PipedOutputStream(outPipeIn);
+                Reader reader = new Reader(outPipeIn);
+                reader.getInputObservable().subscribe(conn::send);
+                reader.startReading();
+
+                inPipeIn = new PipedInputStream(100000);
+                inPipeOut = new PipedOutputStream(inPipeIn);
+            } catch (IOException e) {
+                throw new RuntimeException(e); // TODO(beyang)
+            }
+
+        }
+
+        public InputStream in() {
+            return new WrappedInputStream(inPipeIn);
+        }
+
+        public OutputStream out() {
+            return outPipeOut;
+        }
+
+        public static class WrappedInputStream extends InputStream {
+            InputStream inner;
+            public WrappedInputStream(InputStream inner) {
+                this.inner = inner;
+            }
+
+            @Override
+            public int read() throws IOException {
+                return this.inner.read();
+            }
+        }
+
+        /**
+         * receive receives incoming messages and writes these to the input stream
+         */
+        public void receive(String message) {
+            try {
+                byte[] messageBytes = message.getBytes();
+                inPipeOut.write(String.format("Content-Length: %d\r\n\r\n", messageBytes.length).getBytes());
+                inPipeOut.write(messageBytes);
+            } catch (Exception e) {
+                throw new RuntimeException(e); // TODO(beyang): replace with error
+            }
+        }
     }
 }
