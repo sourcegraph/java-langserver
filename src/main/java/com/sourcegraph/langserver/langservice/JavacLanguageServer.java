@@ -1,7 +1,9 @@
 package com.sourcegraph.langserver.langservice;
 
+import com.sourcegraph.langserver.langservice.compiler.CompilationResult;
 import com.sourcegraph.langserver.langservice.compiler.LanguageData;
 import com.sourcegraph.langserver.langservice.files.RemoteFileContentProvider;
+import com.sourcegraph.langserver.langservice.filters.ReferenceFilterUtils;
 import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
 import com.sourcegraph.langserver.langservice.workspace.Workspaces;
@@ -20,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Element;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class JavacLanguageServer implements LanguageServer, WorkspaceService, TextDocumentService, LanguageClientAware {
@@ -179,11 +181,54 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
         }
     }
 
+    private class ReferencesFilter implements Predicate<LanguageData> {
+
+        private com.sourcegraph.lsp.domain.structures.Location definition;
+
+        /**
+         * Matches all candidates
+         */
+        ReferencesFilter() {
+        }
+
+        /**
+         * Matches candidates with the same location
+         *
+         * @param sample    hover data to extract definition from
+         * @param workspace workspace manager to get compiler options
+         */
+        ReferencesFilter(LanguageData sample, Workspace workspace, Map<String, Object> ctx) {
+            Optional<LanguageData> definition = getDefinitionFromHover(sample, workspace, ctx);
+            definition.ifPresent(languageData -> this.definition = languageData.getLocation());
+        }
+
+        @Override
+        public boolean test(LanguageData candidate) {
+            if (this.definition == null) {
+                return true;
+            }
+            com.sourcegraph.lsp.domain.structures.Location location = candidate.getLocation();
+            return location == null || !definition.equals(location);
+        }
+    }
+
+    // The front-end doesn't seem to be sending the new xlimit parameter, so let's cap it here too so that we don't
+    // do unnecessary work.
+    private static int REFERENCES_LIMIT = 200;
+
+
     @Override
-    public CompletableFuture<List<? extends Location>> references(ReferenceParams origParams) {
+    public CompletableFuture<List<? extends Location>> references(ReferenceParams p) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return doReferences(p);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 
-        // NEXT: finish
-
+    public List<? extends Location> doReferences(ReferenceParams origParams) throws Exception {
         Map<String, Object> ctx = new HashMap<>();
         com.sourcegraph.lsp.domain.params.ReferenceParams params = toLegacyReferenceParams(origParams);
 
@@ -194,38 +239,16 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
         }
         LanguageData hoverData = hover.get();
 
-        ReferenceContext refCtx = params.getContext();
+        com.sourcegraph.lsp.domain.structures.ReferenceContext refCtx = params.getContext();
         boolean includeDeclaration = refCtx != null && refCtx.isIncludeDeclaration();
         ReferencesFilter defaultReferencesFilter = new ReferencesFilter();
 
-        ArrayList<Location> accumulator = new ArrayList<>();
+        ArrayList<com.sourcegraph.lsp.domain.structures.Location> accumulator = new ArrayList<>();
         int limit = refCtx != null && refCtx.getXlimit() != null ? refCtx.getXlimit() : REFERENCES_LIMIT;
-
-        // if there's no request id, then apply the identity function to each partial result, otherwise apply
-        // this::streamPartialResults
-        Function<List<LanguageData>, List<LanguageData>> streamingFunction;
-        if (requestId == null) {
-            streamingFunction = x -> x;
-        } else {
-            LongAdder counter = new LongAdder();
-
-            // initialize the streaming results if we plan on sending any
-            JsonPatch streamingInitPatch = new JsonPatch();
-            streamingInitPatch.add(JsonPatchOperation.of("add", "", new ArrayList()));
-            partialResultStreamer.sendPartialResult(requestId, streamingInitPatch);
-
-            streamingFunction = someReferences -> streamPartialReferences(
-                    someReferences,
-                    requestId,
-                    counter,
-                    limit
-            );
-        }
 
         // note that these loops can be interrupted; the intention is that we cancel any long-running computations if
         // the session is shut down
         for (Workspace workspace : workspaceManager.getWorkspaces()) {
-            t.debug("workspace/references starting workspace", "workspace", workspace.getRootURI());
             if (Thread.currentThread().isInterrupted()) {
                 return Collections.emptyList();
             }
@@ -277,38 +300,34 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
                     continue;
                 }
                 // stream partial results or not, depending on request id
-                List<LanguageData> streamedReferences = streamingFunction.apply(someReferences);
+                List<LanguageData> streamedReferences = someReferences;
                 for (LanguageData streamedReference : streamedReferences) {
                     accumulator.add(streamedReference.getLocation());
                 }
             }
-            t.log("workspace/references finished workspace", "workspace", workspace.getRootURI());
         }
 
-        // we can't sort streaming refs, so only sort if they're non-streaming
-        if (requestId == null) {
-            accumulator.sort((l1, l2) -> { // stable ordering
-                int a = l1.getUri().compareTo(l2.getUri());
-                if (a != 0) {
-                    return a;
-                }
-                int b = l1.getRange().getStart().getLine() - l2.getRange().getStart().getLine();
-                if (b != 0) {
-                    return b;
-                }
-                int c = l1.getRange().getStart().getCharacter() - l2.getRange().getStart().getCharacter();
-                if (c != 0) {
-                    return c;
-                }
-                int d = l1.getRange().getEnd().getLine() - l2.getRange().getEnd().getLine();
-                if (d != 0) {
-                    return d;
-                }
-                return l1.getRange().getEnd().getCharacter() - l2.getRange().getEnd().getCharacter();
-            });
-        }
-        t.end();
-        return accumulator;
+        accumulator.sort((l1, l2) -> { // stable ordering
+            int a = l1.getUri().compareTo(l2.getUri());
+            if (a != 0) {
+                return a;
+            }
+            int b = l1.getRange().getStart().getLine() - l2.getRange().getStart().getLine();
+            if (b != 0) {
+                return b;
+            }
+            int c = l1.getRange().getStart().getCharacter() - l2.getRange().getStart().getCharacter();
+            if (c != 0) {
+                return c;
+            }
+            int d = l1.getRange().getEnd().getLine() - l2.getRange().getEnd().getLine();
+            if (d != 0) {
+                return d;
+            }
+            return l1.getRange().getEnd().getCharacter() - l2.getRange().getEnd().getCharacter();
+        });
+
+        return accumulator.stream().map(JavacLanguageServer::fromLegacyLocation).collect(Collectors.toList());
     }
 
     @Override
