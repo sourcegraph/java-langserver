@@ -8,6 +8,8 @@ import com.sourcegraph.langserver.langservice.workspace.Workspaces;
 import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.NoopMessenger;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;
+import com.sourcegraph.lsp.domain.structures.JsonPatch;
+import com.sourcegraph.lsp.domain.structures.JsonPatchOperation;
 import com.sourcegraph.utils.LanguageUtils;
 import com.sourcegraph.utils.Util;
 import com.sun.source.util.TreePath;
@@ -21,6 +23,8 @@ import javax.lang.model.element.Element;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JavacLanguageServer implements LanguageServer, WorkspaceService, TextDocumentService, LanguageClientAware {
@@ -66,8 +70,16 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
 
     private static com.sourcegraph.lsp.domain.params.TextDocumentPositionParams toLegacyTextDocumentPositionParams(TextDocumentPositionParams p) {
         return new com.sourcegraph.lsp.domain.params.TextDocumentPositionParams()
-                .withPosition(com.sourcegraph.lsp.domain.structures.Position.of(p.getPosition().getLine(), p.getPosition().getCharacter()))
-                .withTextDocument(com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier.of(p.getTextDocument().getUri()));
+                .withPosition(toLegacyPosition(p.getPosition()))
+                .withTextDocument(toLegacyTextDocumentIdentifier(p.getTextDocument()));
+    }
+
+    private static com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier toLegacyTextDocumentIdentifier(TextDocumentIdentifier t) {
+        return com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier.of(t.getUri());
+    }
+
+    private static com.sourcegraph.lsp.domain.structures.Position toLegacyPosition(Position p) {
+        return com.sourcegraph.lsp.domain.structures.Position.of(p.getLine(), p.getCharacter());
     }
 
     private static Location fromLegacyLocation(com.sourcegraph.lsp.domain.structures.Location l) {
@@ -83,6 +95,18 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
 
     private static Position fromLegacyPosition(com.sourcegraph.lsp.domain.structures.Position p) {
         return new Position(p.getLine(), p.getCharacter());
+    }
+
+    private static com.sourcegraph.lsp.domain.params.ReferenceParams toLegacyReferenceParams(ReferenceParams p) {
+        return new com.sourcegraph.lsp.domain.params.ReferenceParams()
+                .withContext(toLegacyReferenceContext(p.getContext()))
+                .withPosition(toLegacyPosition(p.getPosition()))
+                .withTextDocument(toLegacyTextDocumentIdentifier(p.getTextDocument()));
+    }
+
+    private static com.sourcegraph.lsp.domain.structures.ReferenceContext toLegacyReferenceContext(ReferenceContext c) {
+        return new com.sourcegraph.lsp.domain.structures.ReferenceContext()
+                .withIncludeDeclaration(c.isIncludeDeclaration());
     }
 
     @Override
@@ -153,6 +177,138 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    @Override
+    public CompletableFuture<List<? extends Location>> references(ReferenceParams origParams) {
+
+        // NEXT: finish
+
+        Map<String, Object> ctx = new HashMap<>();
+        com.sourcegraph.lsp.domain.params.ReferenceParams params = toLegacyReferenceParams(origParams);
+
+        Optional<LanguageData> hover = findHover(params.getTextDocument().getUri(), params.getPosition(), ctx);
+
+        if (!hover.isPresent()) {
+            return Collections.emptyList();
+        }
+        LanguageData hoverData = hover.get();
+
+        ReferenceContext refCtx = params.getContext();
+        boolean includeDeclaration = refCtx != null && refCtx.isIncludeDeclaration();
+        ReferencesFilter defaultReferencesFilter = new ReferencesFilter();
+
+        ArrayList<Location> accumulator = new ArrayList<>();
+        int limit = refCtx != null && refCtx.getXlimit() != null ? refCtx.getXlimit() : REFERENCES_LIMIT;
+
+        // if there's no request id, then apply the identity function to each partial result, otherwise apply
+        // this::streamPartialResults
+        Function<List<LanguageData>, List<LanguageData>> streamingFunction;
+        if (requestId == null) {
+            streamingFunction = x -> x;
+        } else {
+            LongAdder counter = new LongAdder();
+
+            // initialize the streaming results if we plan on sending any
+            JsonPatch streamingInitPatch = new JsonPatch();
+            streamingInitPatch.add(JsonPatchOperation.of("add", "", new ArrayList()));
+            partialResultStreamer.sendPartialResult(requestId, streamingInitPatch);
+
+            streamingFunction = someReferences -> streamPartialReferences(
+                    someReferences,
+                    requestId,
+                    counter,
+                    limit
+            );
+        }
+
+        // note that these loops can be interrupted; the intention is that we cancel any long-running computations if
+        // the session is shut down
+        for (Workspace workspace : workspaceManager.getWorkspaces()) {
+            t.debug("workspace/references starting workspace", "workspace", workspace.getRootURI());
+            if (Thread.currentThread().isInterrupted()) {
+                return Collections.emptyList();
+            }
+            // excludes or not declaration from the list of references
+            ReferencesFilter filterDefinitions = !includeDeclaration
+                    ? new ReferencesFilter(hoverData, workspace, ctx)
+                    : defaultReferencesFilter;
+            Optional<LanguageData> def = getDefinitionFromHover(hoverData, workspace, ctx);
+            Predicate<JavaFileObject> referencesScopeFilter;
+            // If we found a reference's definition element we may reduce search scope by leaving
+            // only same file or files from the same package if our target element has reduced visibility.
+            // For example, if we are looking for local variable there is no reason to process all the files;
+            // one is enough. Another case is when target element has package level access
+            // Fallback to include all the files
+            referencesScopeFilter = def
+                    .map(defData -> ReferenceFilterUtils.getFilter(hoverData.getElement(), defData.getFileName()))
+                    .orElse(__ -> true);
+
+            for (String uri : workspace.getSourceUris()) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return Collections.emptyList();
+                }
+                if (accumulator.size() >= limit) {
+                    break;
+                }
+                JavaFileObject sourceFile = workspace.getSourceFile(uri);
+                // is there a chance to find ref there based on visibility?
+                if (!referencesScopeFilter.test(sourceFile)) {
+                    continue;
+                }
+                Optional<CompilationResult> optionalResult = compilerService.parse(sourceFile, workspace.getCompiler());
+                if (!optionalResult.isPresent()) {
+                    continue;
+                }
+                CompilationResult compilationResult = optionalResult.get();
+                // quick search for element in a tree
+                if (!compilationResult.containsExactSymbol(hoverData.getElement())) {
+                    continue;
+                }
+                optionalResult = compilerService.analyze(sourceFile, workspace, ctx);
+                if (!optionalResult.isPresent()) {
+                    continue;
+                }
+                compilationResult = optionalResult.get();
+                List<LanguageData> someReferences = compilationResult.findReferences(hoverData).stream()
+                        .filter(filterDefinitions) // exclude declaration if needed
+                        .collect(Collectors.toCollection(ArrayList::new));
+                if (someReferences.isEmpty()) {
+                    continue;
+                }
+                // stream partial results or not, depending on request id
+                List<LanguageData> streamedReferences = streamingFunction.apply(someReferences);
+                for (LanguageData streamedReference : streamedReferences) {
+                    accumulator.add(streamedReference.getLocation());
+                }
+            }
+            t.log("workspace/references finished workspace", "workspace", workspace.getRootURI());
+        }
+
+        // we can't sort streaming refs, so only sort if they're non-streaming
+        if (requestId == null) {
+            accumulator.sort((l1, l2) -> { // stable ordering
+                int a = l1.getUri().compareTo(l2.getUri());
+                if (a != 0) {
+                    return a;
+                }
+                int b = l1.getRange().getStart().getLine() - l2.getRange().getStart().getLine();
+                if (b != 0) {
+                    return b;
+                }
+                int c = l1.getRange().getStart().getCharacter() - l2.getRange().getStart().getCharacter();
+                if (c != 0) {
+                    return c;
+                }
+                int d = l1.getRange().getEnd().getLine() - l2.getRange().getEnd().getLine();
+                if (d != 0) {
+                    return d;
+                }
+                return l1.getRange().getEnd().getCharacter() - l2.getRange().getEnd().getCharacter();
+            });
+        }
+        t.end();
+        return accumulator;
     }
 
     @Override
