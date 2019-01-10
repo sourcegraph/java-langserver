@@ -1,10 +1,10 @@
 package com.sourcegraph.langserver.langservice.workspace;
 
-import com.sourcegraph.lsp.FileContentProvider;
-import com.sourcegraph.utils.LanguageUtils;
 import com.sourcegraph.langserver.langservice.javaconfigjson.Project;
+import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier;
 import com.sourcegraph.utils.ExecutorUtils;
+import com.sourcegraph.utils.LanguageUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import javax.tools.JavaFileObject;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +29,7 @@ public class WorkspaceSourceFileProvider {
 
     private FileContentProvider files;
 
-    private String rootDir;
+    private String rootURI;
 
     /**
      * sourceFileFutures is a map from file URI to CompletableFuture resolving to a JavaFileObject made from the file
@@ -48,14 +46,14 @@ public class WorkspaceSourceFileProvider {
     // map from JavaFileObject.toURI() to PackageIdentifier (threadsafe)
     private Set<URI> fetchedSourceFileUris;
 
-    public WorkspaceSourceFileProvider(FileContentProvider files, String rootDir, ConfigProvider configProvider) {
+
+    public WorkspaceSourceFileProvider(FileContentProvider files, String rootURI, ConfigProvider configProvider) {
         this.files = files;
-        this.rootDir = rootDir;
+        this.rootURI = rootURI;
         this.configProvider = configProvider;
 
         this.fetchedSourceFileUris = ConcurrentHashMap.newKeySet();
     }
-
 
     public Set<String> getSourceUris() {
         if (sourceUris != null) {
@@ -67,10 +65,9 @@ public class WorkspaceSourceFileProvider {
                 return sourceUris;
             }
 
-            String rootURI = "file://" + rootDir;
             List<TextDocumentIdentifier> allFiles;
             try {
-                allFiles = files.listFilesRecursively("file:///");
+                allFiles = files.listFilesRecursively(rootURI);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -156,38 +153,35 @@ public class WorkspaceSourceFileProvider {
      * getSourceFileFutures.
      */
     private SourceFile fetchSourceFile(String uri) throws Exception {
-        Path path = LanguageUtils.uriToPath(uri);
         String content = IOUtils.toString(files.readContent(uri), StandardCharsets.UTF_8);
-        String vfsPath = LanguageUtils.vfsPath(path);
         SourceFile sourceFile = new SourceFile(
-                vfsPath,
-                SourceFile.pathToBinaryName(relPath(path)),
+                uri,
+                SourceFile.pathToBinaryName(relPath(uri)),
                 content);
         return sourceFile;
     }
 
-    public String relPath(Path path) throws Exception {
-        String p = LanguageUtils.vfsPath(path);
-        List<Path> sourcePaths = new ArrayList<>();
+    public String relPath(String uri) throws Exception {
+        List<String> sourceURIs = new ArrayList<>();
         for (String d : configProvider.getConfig().getSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootDir, d));
+            sourceURIs.add(LanguageUtils.concatPath(rootURI, d));
         }
         for (String d : configProvider.getConfig().getTestSourceDirectories()) {
-            sourcePaths.add(Paths.get(rootDir, d));
+            sourceURIs.add(LanguageUtils.concatPath(rootURI, d));
         }
 
-        String candidate = relPath(p, sourcePaths);
+        String candidate = relPath(uri, sourceURIs);
         if (candidate != null) {
             return candidate;
         }
-        throw new Exception("could not relativize path " + path.toString());
+        throw new Exception("could not relativize path " + uri);
     }
 
-    private static String relPath(String path, List<Path> prefixes) {
-        for (Path prefix : prefixes) {
-            String root = StringUtils.appendIfMissing(LanguageUtils.vfsPath(prefix), "/");
-            if (path.startsWith(root)) {
-                return StringUtils.removeStart(path, root);
+    private static String relPath(String uri, List<String> prefixes) {
+        for (String prefix : prefixes) {
+            String root = StringUtils.appendIfMissing(prefix, "/");
+            if (uri.startsWith(root)) {
+                return StringUtils.removeStart(uri, root);
             }
         }
         return null;

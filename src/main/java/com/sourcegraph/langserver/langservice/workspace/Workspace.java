@@ -19,7 +19,7 @@ import java.util.Set;
  * - Provide metadata about the build unit (e.g., artifact ID)
  */
 public interface Workspace {
-    String getRootDir();
+    String getRootURI();
     Set<String> getSourceUris() throws Exception;
     Set<JavaFileObject> getSourceFiles();
     Set<JavaFileObject> getPackageSourceFileObjects(String packageName) throws Exception;

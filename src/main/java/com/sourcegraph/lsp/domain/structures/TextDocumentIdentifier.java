@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TextDocumentIdentifier {
 
+    public static TextDocumentIdentifier of(String uri) {
+        return new TextDocumentIdentifier().withUri(uri);
+    }
+
     private String uri;
 
     public String getUri() {

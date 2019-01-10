@@ -2,7 +2,6 @@ package com.sourcegraph.langserver.langservice.maven;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.sourcegraph.common.Config;
 import com.sourcegraph.langserver.langservice.javaconfigjson.Project;
 import com.sourcegraph.langserver.langservice.javaconfigjson.RepositoryInfo;
 import com.sourcegraph.lsp.domain.result.WorkspaceConfigurationServersResult;

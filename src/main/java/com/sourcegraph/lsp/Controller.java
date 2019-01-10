@@ -34,7 +34,7 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 
 /**
- * Controller controls one end of one LSP connection.
+ * Controller controls one end of one LSP connection. It is associated with exactly one connection.
  */
 public class Controller implements FileContentProvider, PartialResultStreamer, Messenger, Cache {
 

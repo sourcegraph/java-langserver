@@ -53,7 +53,7 @@ public class Workspaces {
             log.warn("Unexpected error attempting to read javaconfig.json: {}", e);
         }
 
-        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively("file:///");
+        List<TextDocumentIdentifier> allFiles = files.listFilesRecursively(rootUri);
         List<String> allUris = Lists.newArrayListWithCapacity(allFiles.size());
         List<String> pomUris = Lists.newArrayList();
         List<String> gradleUris = Lists.newArrayList();
@@ -79,6 +79,7 @@ public class Workspaces {
             ws = fromGradle(rootUri, gradleUris, allUris, files, messenger, servers);
         }
         if (ws == null || ws.size() == 0) {
+            // TODO(beyang): update to use with raw file API
             ws = standardLibraryWorkspace(rootUri, files);
         }
         if (ws == null || ws.size() == 0) {
@@ -137,7 +138,11 @@ public class Workspaces {
         ImmutableMap<String, MavenWorkspaceModelResolver.PomInfo> pomInfos = mavenWorkspaceModelResolver.getPomInfos();
         for (Map.Entry<String, MavenWorkspaceModelResolver.PomInfo> e : pomInfos.entrySet()) {
             String workspaceUri = e.getValue().workspaceUri;
-            String baseDir = LanguageUtils.uriToPath(workspaceUri).toString();
+            String baseDir = LanguageUtils.relativePath(rootUri, workspaceUri);
+            if (baseDir == null) {
+                log.error("Could not resolve effective POM at {}: could not relativize workspace URI", workspaceUri);
+                continue;
+            }
             try {
                 EffectivePom effectivePom = EffectivePom.createAndResolve(baseDir, e.getValue().rawModel, mavenWorkspaceModelResolver, e.getValue().compilerOptions, msgs, servers);
                 effectivePoms.put(workspaceUri, effectivePom);
@@ -148,8 +153,7 @@ public class Workspaces {
 
         List<Workspace> workspaces = new ArrayList<>();
         for (Map.Entry<String, EffectivePom> e : effectivePoms.entrySet()) {
-            String baseDir = LanguageUtils.uriToPath(e.getKey()).toString();
-            workspaces.add(new MavenWorkspace(files, baseDir, e.getValue(), effectivePoms.values()));
+            workspaces.add(new MavenWorkspace(files, e.getKey(), e.getValue(), effectivePoms.values()));
         }
         return workspaces;
     }
