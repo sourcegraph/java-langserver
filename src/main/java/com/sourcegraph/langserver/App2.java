@@ -3,9 +3,13 @@ package com.sourcegraph.langserver;
 
 import ch.qos.logback.classic.Level;
 import com.sourcegraph.common.Config;
+import com.sourcegraph.langserver.langservice.JavacLanguageServer;
+import com.sourcegraph.langserver.langservice.files.RemoteFileContentProvider;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 public class App2 {
 
@@ -43,6 +47,12 @@ public class App2 {
                 .longOpt("directory")
                 .hasArg()
                 .build());
+        options.addOption(Option.builder("t")
+                .argName("token")
+                .longOpt("token")
+                .desc("Authentication token to use when fetching file contents")
+                .hasArg()
+                .build());
 
         CommandLineParser parser = new DefaultParser();
         try {
@@ -58,6 +68,7 @@ public class App2 {
             }
 
             String storageDir = cl.getOptionValue("d", "/tmp/java-ls");
+            String authToken = cl.getOptionValue("t");
 
             // logging
             ch.qos.logback.classic.Logger mainLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.sourcegraph");
@@ -73,7 +84,15 @@ public class App2 {
                     ((double)runtime.totalMemory()/BYTES_TO_GIGABYTES),
                     ((double)runtime.maxMemory()/BYTES_TO_GIGABYTES)));
 
-            LSPWebSocketServer wss = new LSPWebSocketServer(port, storageDir);
+            // Create a LSP server over (1) WebSocket that uses a (2) javac backend that (3) fetches
+            // files from the Sourcegraph raw API.
+            LSPWebSocketServer wss = new LSPWebSocketServer(port, (Void v) ->
+                new JavacLanguageServer(storageDir, (String rootURI) -> {
+                    File cacheRoot = new File(storageDir);
+                    cacheRoot.mkdirs();
+                    return new RemoteFileContentProvider(rootURI, cacheRoot, authToken);
+                })
+            );
             wss.start();
 
             synchronized (this) {

@@ -79,6 +79,7 @@ public class Workspaces {
             ws = fromGradle(rootUri, gradleUris, allUris, files, messenger, servers);
         }
         if (ws == null || ws.size() == 0) {
+            // TODO(beyang: update to use with raw file API
             ws = standardLibraryWorkspace(rootUri, files);
         }
         if (ws == null || ws.size() == 0) {

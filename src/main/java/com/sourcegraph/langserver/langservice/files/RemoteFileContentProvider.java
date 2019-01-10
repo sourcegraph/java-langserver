@@ -3,6 +3,8 @@ package com.sourcegraph.langserver.langservice.files;
 import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -10,7 +12,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -20,6 +24,8 @@ import java.util.zip.ZipInputStream;
  */
 public class RemoteFileContentProvider implements FileContentProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(RemoteFileContentProvider.class);
+
     /**
      * remoteRootURI is the remote root URI, e.g.,
      * "https://${TOKEN}@sourcegraph.com/github.com/apache/commons-io@4daab02fb7d967a39eb15fe33f0d5350fc548a98/-/raw/"
@@ -28,13 +34,16 @@ public class RemoteFileContentProvider implements FileContentProvider {
 
     private File cacheContainer;
 
-    public RemoteFileContentProvider(String remoteRootURI, File cacheContainer) throws IllegalArgumentException {
+    private String authToken;
+
+    public RemoteFileContentProvider(String remoteRootURI, File cacheContainer, String authToken) throws IllegalArgumentException {
         try {
             this.remoteRootURI = new URL(remoteRootURI);
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }
         this.cacheContainer = cacheContainer;
+        this.authToken = authToken;
 
         // TODO: make async
         fetchTree(remoteRootURI, uriToCachePath(remoteRootURI));
@@ -148,10 +157,16 @@ public class RemoteFileContentProvider implements FileContentProvider {
         // TODO(beyang): try-with-resources block (so things are closed properly)
         try {
             if (Files.exists(Paths.get(localPath))) {
+                log.info("Cache path for {} already exists, not refetching", remoteUri);
                 return;
             }
 
-            InputStream respBody = HTTPUtil.httpGet(remoteUri);
+            Map<String, String> headers = new HashMap<>();
+            if (authToken != null) {
+                headers.put("Authorization", "token " + authToken);
+            }
+            headers.put("Accept", "application/zip");
+            InputStream respBody = HTTPUtil.httpGet(remoteUri, headers);
             new File(cacheTmpDir()).mkdirs();
             Path tmpDir = Files.createTempDirectory(Paths.get(cacheTmpDir()), Paths.get(localPath).getFileName().toString());
             // TODO(beyang): delete tmpDir if still exists

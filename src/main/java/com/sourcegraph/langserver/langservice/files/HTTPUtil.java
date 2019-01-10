@@ -14,21 +14,21 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 /**
  * @author beyang
  *
  */
 public class HTTPUtil {
-    public static InputStream httpGet(String url) {
+    public static InputStream httpGet(String url, Map<String, String> headers) {
         try {
             URL u = new URL(url);
             HttpURLConnection conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("GET");
-            // TODO(beyang): pass in token
-            conn.setRequestProperty("Authorization", "token 223144ec7fd26f7bd6ed46521bf2957262216fa3");
-            conn.setRequestProperty("Accept", "application/zip");
-
+            for (Map.Entry<String, String> e : headers.entrySet()) {
+                conn.setRequestProperty(e.getKey(), e.getValue());
+            }
             return new BufferedInputStream(conn.getInputStream());
         } catch (Exception e) {
             throw new RuntimeException(e);

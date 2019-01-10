@@ -24,6 +24,7 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -52,21 +53,22 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
 
     private FileContentProvider files;
 
+    private Function<String, FileContentProvider> filesProvider;
+
     private LanguageClient client;
 
-    public JavacLanguageServer(String storageDir) {
+    public JavacLanguageServer(String storageDir, Function<String, FileContentProvider> filesProvider) {
         this.storageDir = storageDir;
+        this.filesProvider = filesProvider;
     }
 
+    // TODO(beyang): tear things down on shutdown/exit
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams p) {
         remoteRootURI = p.getRootUri();
 
         try {
-            File cacheRoot = new File(storageDir);
-            cacheRoot.mkdirs();
-
-            FileContentProvider files = new RemoteFileContentProvider(remoteRootURI, cacheRoot);
+            FileContentProvider files = filesProvider.apply(remoteRootURI);
             // TODO(beyang): keep?
             ArrayList<WorkspaceConfigurationServersResult.Server> servers = new ArrayList<>();
             List<Workspace> workspaces = Workspaces.fromFiles(remoteRootURI, files, new NoopMessenger(), servers);

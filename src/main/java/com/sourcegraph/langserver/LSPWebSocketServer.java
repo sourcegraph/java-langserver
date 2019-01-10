@@ -5,6 +5,8 @@ import com.sourcegraph.lsp.jsonrpc.Reader;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageClientAware;
+import org.eclipse.lsp4j.services.LanguageServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * A WebSocket server that implements a language server over WebSocket.
@@ -22,23 +25,25 @@ public class LSPWebSocketServer extends WebSocketServer {
 
     private static final Logger log = LoggerFactory.getLogger(LSPWebSocketServer.class);
 
-    private String storageDir;
     private ConcurrentHashMap<WebSocket, Stream> connections;
+    private Function<Void, LanguageServer> languageServerProvider;
 
-    public LSPWebSocketServer(int port, String storageDir) {
+    public LSPWebSocketServer(int port, Function<Void, LanguageServer> languageServerProvider) {
         super(new InetSocketAddress(port));
         this.connections = new ConcurrentHashMap<>();
-        this.storageDir = storageDir;
+        this.languageServerProvider = languageServerProvider;
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         Stream wsConn = new Stream(conn);
         connections.put(conn, wsConn);
-        JavacLanguageServer ls = new JavacLanguageServer(storageDir);
-        // TODO(beyang): use other constructor to add tracing and validation
+        LanguageServer ls = languageServerProvider.apply(null);
+//        // TODO(beyang): use other constructor to add tracing and validation
         Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(ls, wsConn.in(), wsConn.out());
-        ls.connect(launcher.getRemoteProxy());
+        if (ls instanceof LanguageClientAware) {
+            ((LanguageClientAware)ls).connect(launcher.getRemoteProxy());
+        }
         launcher.startListening();
     }
 
