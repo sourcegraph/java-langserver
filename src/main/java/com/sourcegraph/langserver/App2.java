@@ -87,7 +87,7 @@ public class App2 {
             // Create a LSP server over (1) WebSocket that uses a (2) javac backend that (3) fetches
             // files from the Sourcegraph raw API.
             LSPWebSocketServer wss = new LSPWebSocketServer(port, (Void v) ->
-                new JavacLanguageServer(storageDir, (String rootURI) -> {
+                new JavacLanguageServer((String rootURI) -> {
                     File cacheRoot = new File(storageDir);
                     cacheRoot.mkdirs();
                     return new RemoteFileContentProvider(rootURI, cacheRoot, authToken);

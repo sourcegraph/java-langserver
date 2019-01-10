@@ -2,7 +2,6 @@ package com.sourcegraph.langserver.langservice;
 
 import com.sourcegraph.langserver.langservice.compiler.CompilationResult;
 import com.sourcegraph.langserver.langservice.compiler.LanguageData;
-import com.sourcegraph.langserver.langservice.files.RemoteFileContentProvider;
 import com.sourcegraph.langserver.langservice.filters.ReferenceFilterUtils;
 import com.sourcegraph.langserver.langservice.workspace.Workspace;
 import com.sourcegraph.langserver.langservice.workspace.WorkspaceManager;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Element;
 import javax.tools.JavaFileObject;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -36,10 +34,9 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
     private static Logger log = LoggerFactory.getLogger(JavacLanguageServer.class);
 
     /**
-     * Fields set in the constructor.
+     * Fields set in constructor
      */
-
-    private String storageDir;
+    private Function<String, FileContentProvider> filesProvider;
 
     /**
      * Fields set on initialization.
@@ -51,32 +48,28 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
 
     private CompilerService compilerService;
 
-    private FileContentProvider files;
-
-    private Function<String, FileContentProvider> filesProvider;
-
+    /**
+     * Other fields (may be null)
+     */
     private LanguageClient client;
 
-    public JavacLanguageServer(String storageDir, Function<String, FileContentProvider> filesProvider) {
-        this.storageDir = storageDir;
+
+    public JavacLanguageServer(Function<String, FileContentProvider> filesProvider) {
         this.filesProvider = filesProvider;
     }
 
-    // TODO(beyang): tear things down on shutdown/exit
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams p) {
         remoteRootURI = p.getRootUri();
 
         try {
             FileContentProvider files = filesProvider.apply(remoteRootURI);
-            // TODO(beyang): keep?
             ArrayList<WorkspaceConfigurationServersResult.Server> servers = new ArrayList<>();
             List<Workspace> workspaces = Workspaces.fromFiles(remoteRootURI, files, new NoopMessenger(), servers);
             WorkspaceManager workspaceManager = new WorkspaceManager(workspaces, files);
 
             this.workspaceManager = workspaceManager;
             this.compilerService = new CompilerService(workspaceManager);
-            this.files = files;
 
             return CompletableFuture.completedFuture(new InitializeResult(new ServerCapabilities()));
         } catch (Exception e) {
@@ -85,6 +78,14 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
             return f;
         }
     }
+
+    @Override
+    public CompletableFuture<Object> shutdown() {
+        return CompletableFuture.completedFuture(new Object());
+    }
+
+    @Override
+    public void exit() {}
 
     private static com.sourcegraph.lsp.domain.params.TextDocumentPositionParams toLegacyTextDocumentPositionParams(TextDocumentPositionParams p) {
         return new com.sourcegraph.lsp.domain.params.TextDocumentPositionParams()
@@ -344,16 +345,6 @@ public class JavacLanguageServer implements LanguageServer, WorkspaceService, Te
         });
 
         return accumulator.stream().map(JavacLanguageServer::fromLegacyLocation).collect(Collectors.toList());
-    }
-
-    @Override
-    public CompletableFuture<Object> shutdown() {
-        return null;
-    }
-
-    @Override
-    public void exit() {
-
     }
 
     @Override

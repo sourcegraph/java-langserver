@@ -39,7 +39,6 @@ public class LSPWebSocketServer extends WebSocketServer {
         Stream wsConn = new Stream(conn);
         connections.put(conn, wsConn);
         LanguageServer ls = languageServerProvider.apply(null);
-//        // TODO(beyang): use other constructor to add tracing and validation
         Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(ls, wsConn.in(), wsConn.out());
         if (ls instanceof LanguageClientAware) {
             ((LanguageClientAware)ls).connect(launcher.getRemoteProxy());
@@ -54,10 +53,15 @@ public class LSPWebSocketServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String msg) {
+        Stream stream = connections.get(conn);
+        if (stream == null) {
+            log.error("Stream for connection {} not found", conn);
+            return;
+        }
         try {
-            connections.get(conn).receive(msg);
-        } catch (NullPointerException e) {
-            throw new RuntimeException("Connection not found", e);
+            stream.receive(msg);
+        } catch (IOException e) {
+            log.error("Failed to write received message to language server input stream {}", msg, e);
         }
     }
 
@@ -68,7 +72,7 @@ public class LSPWebSocketServer extends WebSocketServer {
 
     @Override
     public void onStart() {
-        log.info("Listening for websocket connections");
+        log.info("Listening for WebSocket connections on port {}", getPort());
     }
 
     /**
@@ -106,9 +110,8 @@ public class LSPWebSocketServer extends WebSocketServer {
                 inPipeIn = new PipedInputStream(100000);
                 inPipeOut = new PipedOutputStream(inPipeIn);
             } catch (IOException e) {
-                throw new RuntimeException(e); // TODO(beyang)
+                throw new RuntimeException("Failed to construct LSPWebSocketServer.Stream", e);
             }
-
         }
 
         public InputStream in() {
@@ -134,14 +137,10 @@ public class LSPWebSocketServer extends WebSocketServer {
         /**
          * receive receives incoming messages and writes these to the input stream
          */
-        public void receive(String message) {
-            try {
-                byte[] messageBytes = message.getBytes();
-                inPipeOut.write(String.format("Content-Length: %d\r\n\r\n", messageBytes.length).getBytes());
-                inPipeOut.write(messageBytes);
-            } catch (Exception e) {
-                throw new RuntimeException(e); // TODO(beyang): replace with error
-            }
+        public void receive(String message) throws IOException {
+            byte[] messageBytes = message.getBytes();
+            inPipeOut.write(String.format("Content-Length: %d\r\n\r\n", messageBytes.length).getBytes());
+            inPipeOut.write(messageBytes);
         }
     }
 }
