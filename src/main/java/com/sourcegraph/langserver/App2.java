@@ -90,7 +90,11 @@ public class App2 {
                 new JavacLanguageServer((String rootURI) -> {
                     File cacheRoot = new File(storageDir);
                     cacheRoot.mkdirs();
-                    return new RemoteFileContentProvider(rootURI, cacheRoot, authToken);
+                    try {
+                        return new RemoteFileContentProvider(rootURI, cacheRoot, authToken);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 })
             );
             wss.start();
