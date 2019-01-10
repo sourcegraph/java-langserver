@@ -78,14 +78,6 @@ public class Controller implements FileContentProvider, PartialResultStreamer, M
         this.requestHandlingExecutor = Executors.newCachedThreadPool();
     }
 
-//    public static void serveWS(int port,
-//                               Function<Controller, MessageHandlerService> handlerSupplier,
-//                               Function<Controller, Tracer> tracerSupplier,
-//                               boolean logRequests) {
-//        LSPWebSocketServer webSocketController = new LSPWebSocketServer();
-//        webSocketController.start();
-//    }
-
     public static void serve(int port,
                              Function<Controller, MessageHandlerService> handlerSupplier,
                              Function<Controller, Tracer> tracerSupplier,

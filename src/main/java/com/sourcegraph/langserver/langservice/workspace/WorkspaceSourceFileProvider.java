@@ -1,11 +1,10 @@
 package com.sourcegraph.langserver.langservice.workspace;
 
-import com.sourcegraph.lsp.FileContentProvider;
-import com.sourcegraph.utils.LanguageUtils;
 import com.sourcegraph.langserver.langservice.javaconfigjson.Project;
+import com.sourcegraph.lsp.FileContentProvider;
 import com.sourcegraph.lsp.domain.structures.TextDocumentIdentifier;
 import com.sourcegraph.utils.ExecutorUtils;
-import com.sun.tools.internal.xjc.Language;
+import com.sourcegraph.utils.LanguageUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import javax.tools.JavaFileObject;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
